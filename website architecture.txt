@@ -1,0 +1,49 @@
+src
+│
+├── app
+│   ├── login
+│   ├── dashboard
+│   ├── patients
+│   │      page.tsx
+│   │
+│   ├── patients
+│   │      └── [id]
+│   │             page.tsx
+│   │
+│   ├── registration
+│   ├── appointments
+│   ├── opd
+│   ├── ipd
+│   ├── pharmacy
+│   ├── laboratory
+│   ├── radiology
+│   ├── billing
+│   ├── nursing
+│   ├── doctors
+│   ├── reports
+│   ├── settings
+│   │
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+│
+├── components
+│      ├── layout
+│      ├── dashboard
+│      ├── patients
+│      ├── forms
+│      ├── ui
+│      ├── tables
+│      └── charts
+│
+├── data
+│      patients.ts
+│      doctors.ts
+│      appointments.ts
+│      medicines.ts
+│
+├── lib
+│
+├── hooks
+│
+└── assets

@@ -1,0 +1,243 @@
+# Anexra Full Brand Color System
+
+Your existing palette already gives:
+
+* premium healthcare-tech feel
+* intelligent warmth instead of cold corporate blue
+* futuristic + human-centered branding
+* elegant dark maroon identity
+
+So I expanded it into a complete scalable design system suitable for:
+
+* website UI
+* SaaS dashboard
+* mobile app
+* presentations
+* social media
+* investor decks
+* branding assets
+
+---
+
+# 1. Core Brand Palette
+
+| Role        | Color         | HEX       |
+| ----------- | ------------- | --------- |
+| Primary 900 | Deep Core     | `#2b0b08` |
+| Primary 800 | Rich Dark     | `#3a110d` |
+| Primary 700 | Brand Core    | `#4c1711` |
+| Primary 600 | Strong Accent | `#6a2f33` |
+| Primary 500 | Mid Tone      | `#87565b` |
+| Primary 400 | Soft Brand    | `#a8767a` |
+| Primary 300 | Muted Rose    | `#c79da1` |
+| Primary 200 | Soft Tint     | `#ddc5c7` |
+| Primary 100 | Light Tint    | `#ece1e2` |
+| Primary 50  | Surface Tint  | `#f7f3f3` |
+
+---
+
+# 2. Neutral System
+
+These are extremely important for professional UI design.
+
+| Role        | HEX       |
+| ----------- | --------- |
+| Neutral 950 | `#181414` |
+| Neutral 900 | `#231d1d` |
+| Neutral 800 | `#3d3435` |
+| Neutral 700 | `#5e5254` |
+| Neutral 600 | `#7f7072` |
+| Neutral 500 | `#9d8f91` |
+| Neutral 400 | `#b8abac` |
+| Neutral 300 | `#d8c7c9` |
+| Neutral 200 | `#e7dddd` |
+| Neutral 100 | `#f4efee` |
+| Neutral 50  | `#fcfaf9` |
+
+---
+
+# 3. Accent Colors
+
+These help your UI feel “next-gen” instead of flat.
+
+## Tech Accent (recommended)
+
+| Role            | HEX       |
+| --------------- | --------- |
+| Electric Accent | `#7c3aed` |
+| Accent Hover    | `#6d28d9` |
+| Accent Glow     | `#c4b5fd` |
+
+This violet works beautifully with your maroon palette.
+
+---
+
+# 4. Semantic Colors
+
+## Success
+
+| Role          | HEX       |
+| ------------- | --------- |
+| Success Dark  | `#166534` |
+| Success       | `#22c55e` |
+| Success Light | `#dcfce7` |
+
+## Warning
+
+| Role          | HEX       |
+| ------------- | --------- |
+| Warning Dark  | `#92400e` |
+| Warning       | `#f59e0b` |
+| Warning Light | `#fef3c7` |
+
+## Error
+
+| Role        | HEX       |
+| ----------- | --------- |
+| Error Dark  | `#991b1b` |
+| Error       | `#ef4444` |
+| Error Light | `#fee2e2` |
+
+---
+
+# 5. Recommended Website Usage
+
+## Backgrounds
+
+| Use             | Color                |
+| --------------- | -------------------- |
+| Main Background | `#f4efee`            |
+| Cards           | `#fcfaf9`            |
+| Dark Sections   | `#2b0b08`            |
+| Hero Overlay    | `rgba(43,11,8,0.75)` |
+
+---
+
+## Typography
+
+| Use          | Color     |
+| ------------ | --------- |
+| Main Heading | `#2b0b08` |
+| Body Text    | `#5e5254` |
+| Muted Text   | `#9d8f91` |
+| White Text   | `#ffffff` |
+
+---
+
+## Buttons
+
+### Primary CTA
+
+| Property   | Color     |
+| ---------- | --------- |
+| Background | `#4c1711` |
+| Hover      | `#6a2f33` |
+| Text       | `#ffffff` |
+
+### Secondary CTA
+
+| Property   | Color         |
+| ---------- | ------------- |
+| Background | `transparent` |
+| Border     | `#87565b`     |
+| Text       | `#87565b`     |
+
+### Tech CTA
+
+| Property   | Color     |
+| ---------- | --------- |
+| Background | `#7c3aed` |
+| Hover      | `#6d28d9` |
+| Text       | `#ffffff` |
+
+---
+
+# 6. Premium Gradient Suggestions
+
+## Main Brand Gradient
+
+```css
+linear-gradient(135deg, #2b0b08 0%, #6a2f33 100%)
+```
+
+## Futuristic Gradient
+
+```css
+linear-gradient(135deg, #4c1711 0%, #7c3aed 100%)
+```
+
+## Soft UI Gradient
+
+```css
+linear-gradient(135deg, #f7f3f3 0%, #ece1e2 100%)
+```
+
+---
+
+# 7. Dark Mode Palette
+
+| Use            | HEX       |
+| -------------- | --------- |
+| Background     | `#120909` |
+| Surface        | `#1d1010` |
+| Elevated Card  | `#2b1718` |
+| Primary Text   | `#f4efee` |
+| Secondary Text | `#d8c7c9` |
+| Accent         | `#c79da1` |
+| Tech Accent    | `#a78bfa` |
+
+---
+
+# 8. Brand Personality This Palette Creates
+
+Your palette communicates:
+
+* intelligent healthcare
+* premium consulting
+* futuristic assistance
+* human-centered technology
+* trust + sophistication
+* modern AI startup
+* calm authority
+
+It avoids:
+
+* generic hospital blue
+* overly aggressive tech neon
+* childish startup colors
+* corporate monotony
+
+---
+
+# 9. Best Font Pairing
+
+For your palette, these work extremely well:
+
+## Headings
+
+* Space Grotesk
+* Sora
+* Clash Display
+
+## Body
+
+* Inter
+* Manrope
+
+---
+
+# 10. Recommended Design Style for Anexra
+
+You should lean toward:
+
+* glassmorphism (light usage)
+* soft gradients
+* large spacing
+* thin borders
+* elegant shadows
+* rounded corners (16–24px)
+* subtle glows
+* dark hero sections
+* soft animated backgrounds
+
+That direction fits your “Next-Gen Assistance” positioning extremely well.
