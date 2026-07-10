@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+ <head><script>window["__codeletBootstrap__"]=JSON.parse('{"A":"A","B":"20260709-05-e5cead5"}');</script><script src="/_sdk/f432b76fb310b513.telemetry_sdk.js" integrity="sha512-9FJQ55EKmmqhyyik8BhrMVfm0+iYYfb8uOlRsjtkxJMEI97qOVEI4PnHohDjQAtvAep0IOEpdQ64eki0sz62ug=="></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anexra EHR</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+        * { font-family: 'DM Sans', sans-serif; }
+        :root {
+            --maroon: #7B2D3B;
+            --maroon-light: #9B4D5B;
+            --rose-bg: #FDF5F5;
+            --rose-light: #FAE8E8;
+            --maroon-dark: #5A1F2B;
+        }
+        .sidebar-item { transition: all 0.2s; }
+        .sidebar-item:hover { background: var(--maroon-dark); }
+        .sidebar-item.active { background: var(--maroon-dark); }
+        .nav-tab.active { background: var(--maroon); color: #fff; border-radius: 8px; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .patient-tab.active { background: var(--maroon); color: #fff; }
+        .detail-tab.active { background: var(--maroon-dark); color: #fff; border-radius: 6px; }
+    </style>
+  <script src="/_sdk/0179d719c431a79e.data_sdk.js" type="text/javascript" integrity="sha512-OsRvJkI5GkC3MJQcgotQYotpzrMSX415GiKKgvYdxQEEkzD/fdchShO2FMSy0PJr/tiINMXOk5Vl2zAgg6bUiA=="></script>
+  <script src="/_sdk/9432170dbd2ae0df.resizing_sdk.js" type="text/javascript" integrity="sha512-FeT+58sb1f9ejWPWFjCbJvTT+SDwGV+ngrHUnlO7TWEOoqwOLj6p256kO3vOL7DIWl1cIgrobiof8v2bOigwPg=="></script>
+ </head>
+ <body data-template-id="__page-root" class="min-h-screen bg-gray-50">
+  <!-- Top Navbar -->
+  <header class="w-full bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+   <div class="flex items-center gap-2"><img data-template-id="anexra-logo" class="canva-image h-9 w-auto" loading="lazy">
+   </div>
+   <nav class="hidden md:flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+    <button class="nav-tab px-4 py-2 text-sm font-medium text-gray-600 flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i>Referral Code</button> <button class="nav-tab active px-4 py-2 text-sm font-medium flex items-center gap-2"><i data-lucide="bed" class="w-4 h-4"></i>IPD Patients</button> <button class="nav-tab px-4 py-2 text-sm font-medium text-gray-600 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i>OPD Patients</button> <button class="nav-tab px-4 py-2 text-sm font-medium text-gray-600 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4"></i>Dashboard</button>
+   </nav>
+   <div class="flex items-center gap-3">
+    <button class="relative"><i data-lucide="bell" class="w-5 h-5 text-gray-600"></i><span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] flex items-center justify-center">6</span></button>
+    <div class="flex items-center gap-2">
+     <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center"><i data-lucide="user" class="w-4 h-4 text-gray-500"></i>
+     </div>
+     <div class="text-right hidden sm:block">
+      <p class="text-xs text-gray-500">Welcome,</p>
+      <p data-template-id="doctor-name" class="canva-text text-sm font-semibold text-gray-800"></p>
+     </div>
+    </div>
+   </div>
+  </header>
+  <div class="flex w-full">
+   <!-- Sidebar -->
+   <aside class="w-20 min-h-screen flex flex-col items-center py-4 gap-1 sticky top-[60px] self-start" style="background:var(--maroon)">
+    <button onclick="showView('patients')" class="sidebar-item active flex flex-col items-center gap-1 w-full py-3 text-xs text-white" style="background:var(--maroon-dark)"><i data-lucide="users" class="w-5 h-5"></i>My Patients</button> <button onclick="showView('registration')" class="sidebar-item flex flex-col items-center gap-1 w-full py-3 text-xs text-gray-200 hover:text-white"><i data-lucide="user-plus" class="w-5 h-5"></i>Add Patient</button> <button onclick="showView('discharge')" class="sidebar-item flex flex-col items-center gap-1 w-full py-3 text-xs text-gray-200 hover:text-white"><i data-lucide="clipboard" class="w-5 h-5"></i>Discharge</button> <button onclick="showView('transfer')" class="sidebar-item flex flex-col items-center gap-1 w-full py-3 text-xs text-gray-200 hover:text-white"><i data-lucide="arrow-left-right" class="w-5 h-5"></i>Transfer</button> <button onclick="showView('reports')" class="sidebar-item flex flex-col items-center gap-1 w-full py-3 text-xs text-gray-200 hover:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>Reports</button> <button onclick="showView('alerts')" class="sidebar-item flex flex-col items-center gap-1 w-full py-3 text-xs text-gray-200 hover:text-white"><i data-lucide="bell" class="w-5 h-5"></i>Alerts</button> <button onclick="showView('forms')" class="sidebar-item flex flex-col items-center gap-1 w-full py-3 text-xs text-gray-200 hover:text-white"><i data-lucide="file-check" class="w-5 h-5"></i>Clinical Forms</button> <button class="sidebar-item flex flex-col items-center gap-1 w-full py-3 text-xs text-gray-200 hover:text-white"><i data-lucide="settings" class="w-5 h-5"></i>Settings</button>
+    <div class="flex-1"></div><button class="sidebar-item flex flex-col items-center gap-1 w-full py-3 text-xs text-gray-200 hover:text-white"><i data-lucide="log-out" class="w-5 h-5"></i>Logout</button>
+   </aside><!-- Main Content -->
+   <main class="flex-1 p-6 overflow-auto">
+    <!-- Patient List View -->
+    <div id="view-patients" class="view active">
+     <h1 data-template-id="patients-title" class="canva-text text-2xl font-bold text-gray-900 mb-1"></h1>
+     <p data-template-id="patients-subtitle" class="canva-text text-sm text-gray-500 mb-4"></p>
+     <div class="flex flex-wrap items-center gap-3 mb-4">
+      <div class="flex items-center gap-2 bg-white border rounded-lg px-3 py-2 flex-1 max-w-sm">
+       <i data-lucide="search" class="w-4 h-4 text-gray-400"></i> <input id="patient-search" type="text" placeholder="Search by UHID, Name, Bed No..." class="outline-none text-sm flex-1 bg-transparent">
+      </div><select class="border rounded-lg px-3 py-2 text-sm bg-white"><option>All Floors</option></select> <button data-template-id="export-btn" class="canva-button px-4 py-2 text-sm font-medium rounded-lg text-white flex items-center gap-2" style="background:var(--maroon)"><i data-lucide="download" class="w-4 h-4"></i></button>
+     </div>
+     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <table class="w-full text-sm">
+       <thead>
+        <tr class="border-b" style="background:var(--rose-bg)">
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">UHID</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Bed No.</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Age</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Name of Patient</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Consultant</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Diagnosis</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Department</th>
+         <th class="px-4 py-3"></th>
+        </tr>
+       </thead>
+       <tbody id="patient-table-body"></tbody>
+      </table>
+     </div>
+     <div class="flex items-center justify-between mt-4 text-sm text-gray-500">
+      <span>Showing 1 to 8 of 120 patients</span>
+      <div class="flex items-center gap-1">
+       <button class="w-8 h-8 border rounded flex items-center justify-center"><i data-lucide="chevron-left" class="w-4 h-4"></i></button> <button class="w-8 h-8 rounded flex items-center justify-center text-white font-semibold" style="background:var(--maroon)">1</button> <button class="w-8 h-8 border rounded flex items-center justify-center">2</button> <button class="w-8 h-8 border rounded flex items-center justify-center">3</button> <span>...</span> <button class="w-8 h-8 border rounded flex items-center justify-center">15</button> <button class="w-8 h-8 border rounded flex items-center justify-center"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+      </div>
+     </div>
+    </div><!-- Patient Detail View -->
+    <div id="view-detail" class="view">
+     <button onclick="showView('patients')" class="text-sm mb-3 flex items-center gap-1" style="color:var(--maroon)"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back to My Patients</button>
+     <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+      <div class="flex flex-wrap items-start gap-4">
+       <img data-template-id="patient-avatar" class="canva-image w-16 h-16 rounded-full object-cover" loading="lazy">
+       <div class="flex-1">
+        <h2 id="detail-name" class="text-xl font-bold text-gray-900">Rajesh Kumar</h2>
+        <p id="detail-uhid" class="text-sm text-gray-500">UHID: ANXIP2505001</p>
+        <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
+         <span id="detail-age">Male • 58 Y • 12 Apr 1966</span> <span id="detail-phone">📞 +91 98765 43210</span>
+        </div>
+       </div><span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Admitted</span>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4 pt-4 border-t text-sm">
+       <div><span class="text-gray-500 block">Bed No.</span><strong>201A</strong><br><span class="text-gray-400 text-xs">General Ward</span>
+       </div>
+       <div><span class="text-gray-500 block">Admission Date</span><strong>12 May 2025</strong><br><span class="text-gray-400 text-xs">10:30 AM</span>
+       </div>
+       <div><span class="text-gray-500 block">Consultant</span><strong>Dr. Amit Verma</strong><br><span class="text-gray-400 text-xs">MD, Internal Medicine</span>
+       </div>
+       <div><span class="text-gray-500 block">Department / Floor</span><strong>2nd Floor</strong><br><span class="text-gray-400 text-xs">General Ward</span>
+       </div>
+       <div><span class="text-gray-500 block">Status</span><strong class="text-green-600">Admitted ✦</strong>
+       </div>
+      </div>
+     </div><!-- Tabs -->
+     <div class="flex flex-wrap gap-1 mb-4 bg-gray-100 rounded-lg p-1">
+      <button class="detail-tab active px-3 py-2 text-xs font-medium rounded">Overview</button> <button class="detail-tab px-3 py-2 text-xs font-medium rounded text-gray-600">Clinical Notes</button> <button class="detail-tab px-3 py-2 text-xs font-medium rounded text-gray-600">Diagnosis</button> <button class="detail-tab px-3 py-2 text-xs font-medium rounded text-gray-600">Medications</button> <button class="detail-tab px-3 py-2 text-xs font-medium rounded text-gray-600">Lab Reports</button> <button class="detail-tab px-3 py-2 text-xs font-medium rounded text-gray-600">Vitals</button> <button class="detail-tab px-3 py-2 text-xs font-medium rounded text-gray-600">Nursing</button> <button class="detail-tab px-3 py-2 text-xs font-medium rounded text-gray-600">Billing</button>
+     </div><!-- Overview Content -->
+     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl shadow-sm p-4">
+       <h3 data-template-id="summary-title" class="canva-text font-semibold text-gray-900 mb-3"></h3>
+       <div class="space-y-2 text-sm">
+        <div class="flex justify-between"><span class="text-gray-500">Age / Gender</span><span class="font-medium">58 Y / Male</span>
+        </div>
+        <div class="flex justify-between"><span class="text-gray-500">Blood Group</span><span class="font-medium">B+</span>
+        </div>
+        <div class="flex justify-between"><span class="text-gray-500">Height / Weight</span><span class="font-medium">170 cm / 74 kg</span>
+        </div>
+        <div class="flex justify-between"><span class="text-gray-500">Allergies</span><span class="font-medium">No Known Allergies</span>
+        </div>
+        <div class="flex justify-between"><span class="text-gray-500">Insurance</span><span class="font-medium">Star Health Insurance</span>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-4">
+       <h3 class="font-semibold text-gray-900 mb-3">Chief Complaints</h3>
+       <ul class="text-sm space-y-1 text-gray-700 list-disc list-inside">
+        <li>Fever since 3 days</li>
+        <li>Headache and body ache</li>
+        <li>Loss of appetite</li>
+        <li>General weakness</li>
+       </ul>
+       <p class="text-xs text-gray-400 mt-2">Recorded on 12 May 2025 | 10:35 AM</p>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-4">
+       <h3 data-template-id="vitals-title" class="canva-text font-semibold text-gray-900 mb-3"></h3>
+       <div class="space-y-2 text-sm">
+        <div class="flex justify-between"><span class="text-gray-500">🩸 Blood Pressure</span><span class="font-medium">128/82 mmHg</span>
+        </div>
+        <div class="flex justify-between"><span class="text-gray-500">❤️ Heart Rate</span><span class="font-medium">78 bpm</span>
+        </div>
+        <div class="flex justify-between"><span class="text-gray-500">🌡️ Temperature</span><span class="font-medium">98.6 °F</span>
+        </div>
+        <div class="flex justify-between"><span class="text-gray-500">🫁 SpO2</span><span class="font-medium">97 %</span>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-4">
+       <h3 class="font-semibold text-gray-900 mb-3">Current Diagnosis</h3>
+       <div class="space-y-2 text-sm">
+        <div class="flex items-center gap-2"><span class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">Primary</span><span>Type 2 Diabetes Mellitus</span>
+        </div>
+        <div class="flex items-center gap-2"><span class="px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700">Secondary</span><span>Hypertension</span>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-4">
+       <h3 class="font-semibold text-gray-900 mb-3">Recent Lab Reports</h3>
+       <div class="space-y-2 text-sm">
+        <div class="flex justify-between"><span>Complete Blood Count</span><span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">Completed</span>
+        </div>
+        <div class="flex justify-between"><span>Blood Sugar Fasting</span><span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">Completed</span>
+        </div>
+        <div class="flex justify-between"><span>HbA1c</span><span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">Completed</span>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-4">
+       <h3 class="font-semibold text-gray-900 mb-3">Medications (Active)</h3>
+       <div class="space-y-2 text-sm">
+        <div class="flex justify-between"><span>Tab. Metformin 500 mg</span><span class="text-gray-400">1-0-1 After Food</span>
+        </div>
+        <div class="flex justify-between"><span>Tab. Amlodipine 5 mg</span><span class="text-gray-400">1-0-1 After Food</span>
+        </div>
+        <div class="flex justify-between"><span>Tab. Paracetamol 650 mg</span><span class="text-gray-400">1-0-1 SOS</span>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- Registration View -->
+    <div id="view-registration" class="view">
+     <button onclick="showView('patients')" class="text-sm mb-3 flex items-center gap-1" style="color:var(--maroon)"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Patient List</button>
+     <h1 data-template-id="reg-title" class="canva-text text-2xl font-bold text-gray-900 mb-1"></h1>
+     <p data-template-id="reg-subtitle" class="canva-text text-sm text-gray-500 mb-5"></p>
+     <form id="reg-form" class="bg-white rounded-xl shadow-sm p-6 space-y-6">
+      <h3 class="font-semibold text-base" style="color:var(--maroon)">Personal Information</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Title</label><select class="w-full border rounded-lg px-3 py-2 text-sm"><option>Select</option><option>Mr.</option><option>Mrs.</option><option>Ms.</option></select>
+       </div>
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">First Name *</label><input type="text" placeholder="Enter first name" class="w-full border rounded-lg px-3 py-2 text-sm">
+       </div>
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Middle Name</label><input type="text" placeholder="Enter middle name" class="w-full border rounded-lg px-3 py-2 text-sm">
+       </div>
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Last Name *</label><input type="text" placeholder="Enter last name" class="w-full border rounded-lg px-3 py-2 text-sm">
+       </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Date of Birth *</label><input type="date" class="w-full border rounded-lg px-3 py-2 text-sm">
+       </div>
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Age</label><input type="text" placeholder="Auto" class="w-full border rounded-lg px-3 py-2 text-sm bg-gray-50" readonly>
+       </div>
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Gender *</label><select class="w-full border rounded-lg px-3 py-2 text-sm"><option>Select Gender</option><option>Male</option><option>Female</option><option>Other</option></select>
+       </div>
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Blood Group</label><select class="w-full border rounded-lg px-3 py-2 text-sm"><option>Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select>
+       </div>
+      </div>
+      <h3 class="font-semibold text-base" style="color:var(--maroon)">Contact Information</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Mobile No. *</label><input type="tel" placeholder="Enter mobile number" class="w-full border rounded-lg px-3 py-2 text-sm">
+       </div>
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Alternate Mobile No.</label><input type="tel" placeholder="Enter alternate number" class="w-full border rounded-lg px-3 py-2 text-sm">
+       </div>
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Email ID</label><input type="email" placeholder="Enter email address" class="w-full border rounded-lg px-3 py-2 text-sm">
+       </div>
+      </div>
+      <h3 class="font-semibold text-base" style="color:var(--maroon)">Address Information</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">House / Flat / Building</label><input type="text" placeholder="Enter house / flat" class="w-full border rounded-lg px-3 py-2 text-sm">
+       </div>
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">City *</label><input type="text" placeholder="Enter city" class="w-full border rounded-lg px-3 py-2 text-sm">
+       </div>
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">State *</label><select class="w-full border rounded-lg px-3 py-2 text-sm"><option>Select State</option><option>Maharashtra</option><option>Karnataka</option><option>Delhi</option></select>
+       </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Pincode *</label><input type="text" placeholder="Enter pincode" class="w-full border rounded-lg px-3 py-2 text-sm">
+       </div>
+      </div>
+      <h3 class="font-semibold text-base" style="color:var(--maroon)">Emergency Contact</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Contact Name *</label><input type="text" placeholder="Enter contact name" class="w-full border rounded-lg px-3 py-2 text-sm">
+       </div>
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Relation *</label><select class="w-full border rounded-lg px-3 py-2 text-sm"><option>Select Relation</option><option>Spouse</option><option>Parent</option><option>Sibling</option><option>Child</option></select>
+       </div>
+       <div><label class="text-xs font-medium text-gray-700 block mb-1">Mobile No. *</label><input type="tel" placeholder="Enter mobile number" class="w-full border rounded-lg px-3 py-2 text-sm">
+       </div>
+      </div>
+      <div class="flex gap-3 pt-4">
+       <button data-template-id="reg-save-btn" type="submit" class="canva-button px-6 py-3 rounded-lg text-white font-semibold" style="background:var(--maroon)"></button> <button data-template-id="reg-cancel-btn" type="button" onclick="showView('patients')" class="canva-button px-6 py-3 rounded-lg border font-semibold text-gray-600"></button>
+      </div>
+     </form>
+    </div><!-- OPD Patients View -->
+    <div id="view-opd" class="view">
+     <h1 data-template-id="opd-title" class="canva-text text-2xl font-bold text-gray-900 mb-1"></h1>
+     <p data-template-id="opd-subtitle" class="canva-text text-sm text-gray-500 mb-4"></p>
+     <div class="flex flex-wrap items-center gap-3 mb-4">
+      <div class="flex items-center gap-2 bg-white border rounded-lg px-3 py-2 flex-1 max-w-sm">
+       <i data-lucide="search" class="w-4 h-4 text-gray-400"></i> <input id="opd-search" type="text" placeholder="Search by Token, Name..." class="outline-none text-sm flex-1 bg-transparent">
+      </div><select class="border rounded-lg px-3 py-2 text-sm bg-white"><option>All Departments</option></select> <button class="px-4 py-2 text-sm font-medium rounded-lg text-white flex items-center gap-2" style="background:var(--maroon)"><i data-lucide="download" class="w-4 h-4"></i>Export</button>
+     </div>
+     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <table class="w-full text-sm">
+       <thead>
+        <tr class="border-b" style="background:var(--rose-bg)">
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Token</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Name</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Age</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Department</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Doctor</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Status</th>
+         <th class="px-4 py-3"></th>
+        </tr>
+       </thead>
+       <tbody id="opd-table-body"></tbody>
+      </table>
+     </div>
+    </div><!-- Transfer View -->
+    <div id="view-transfer" class="view">
+     <h1 data-template-id="transfer-title" class="canva-text text-2xl font-bold text-gray-900 mb-1"></h1>
+     <p data-template-id="transfer-subtitle" class="canva-text text-sm text-gray-500 mb-4"></p>
+     <div class="bg-white rounded-xl shadow-sm p-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div class="bg-gray-50 rounded-lg p-4 text-center">
+        <p class="text-3xl font-bold" style="color:var(--maroon)">8</p>
+        <p class="text-sm text-gray-600 mt-1">Pending Transfers</p>
+       </div>
+       <div class="bg-gray-50 rounded-lg p-4 text-center">
+        <p class="text-3xl font-bold text-green-600">12</p>
+        <p class="text-sm text-gray-600 mt-1">Completed Today</p>
+       </div>
+       <div class="bg-gray-50 rounded-lg p-4 text-center">
+        <p class="text-3xl font-bold text-blue-600">3</p>
+        <p class="text-sm text-gray-600 mt-1">In Progress</p>
+       </div>
+      </div>
+      <p class="text-gray-600 mt-6">Patient transfer management and inter-ward movement tracking.</p>
+     </div>
+    </div><!-- Reports View -->
+    <div id="view-reports" class="view">
+     <h1 data-template-id="reports-title" class="canva-text text-2xl font-bold text-gray-900 mb-1"></h1>
+     <p data-template-id="reports-subtitle" class="canva-text text-sm text-gray-500 mb-4"></p>
+     <div class="bg-white rounded-xl shadow-sm p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+       <div class="border rounded-lg p-4">
+        <h3 class="font-semibold mb-2" style="color:var(--maroon)">Daily Reports</h3>
+        <ul class="text-sm space-y-2 text-gray-700">
+         <li>• Admission Report</li>
+         <li>• Discharge Report</li>
+         <li>• Patient Statistics</li>
+        </ul>
+       </div>
+       <div class="border rounded-lg p-4">
+        <h3 class="font-semibold mb-2" style="color:var(--maroon)">Analytics</h3>
+        <ul class="text-sm space-y-2 text-gray-700">
+         <li>• Ward Utilization</li>
+         <li>• Department Performance</li>
+         <li>• Treatment Outcomes</li>
+        </ul>
+       </div>
+      </div>
+      <p class="text-gray-600 mt-6">Comprehensive reporting and analytics dashboard for hospital management.</p>
+     </div>
+    </div><!-- Alerts View -->
+    <div id="view-alerts" class="view">
+     <h1 data-template-id="alerts-title" class="canva-text text-2xl font-bold text-gray-900 mb-1"></h1>
+     <p data-template-id="alerts-subtitle" class="canva-text text-sm text-gray-500 mb-4"></p>
+     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <table class="w-full text-sm">
+       <thead>
+        <tr class="border-b" style="background:var(--rose-bg)">
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Time</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Alert Type</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Message</th>
+         <th class="text-left px-4 py-3 font-semibold" style="color:var(--maroon)">Priority</th>
+        </tr>
+       </thead>
+       <tbody>
+        <tr class="border-b hover:bg-gray-50">
+         <td class="px-4 py-3">10:45 AM</td>
+         <td class="px-4 py-3">Lab Report</td>
+         <td class="px-4 py-3">Blood test results ready for patient ANXIP2505001</td>
+         <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700">High</span></td>
+        </tr>
+        <tr class="border-b hover:bg-gray-50">
+         <td class="px-4 py-3">10:30 AM</td>
+         <td class="px-4 py-3">Medication Due</td>
+         <td class="px-4 py-3">Scheduled medication due for patient in ICU-05</td>
+         <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700">Critical</span></td>
+        </tr>
+        <tr class="border-b hover:bg-gray-50">
+         <td class="px-4 py-3">10:15 AM</td>
+         <td class="px-4 py-3">System Alert</td>
+         <td class="px-4 py-3">Backup completed successfully</td>
+         <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">Low</span></td>
+        </tr>
+       </tbody>
+      </table>
+     </div>
+    </div><!-- Clinical Forms View -->
+    <div id="view-forms" class="view">
+     <h1 data-template-id="forms-title" class="canva-text text-2xl font-bold text-gray-900 mb-1"></h1>
+     <p data-template-id="forms-subtitle" class="canva-text text-sm text-gray-500 mb-5"></p>
+     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+      <div class="bg-white rounded-xl p-4 border text-center">
+       <p class="text-2xl font-bold" style="color:var(--maroon)">32</p>
+       <p class="text-xs text-gray-500">Total Forms</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border text-center">
+       <p class="text-2xl font-bold text-green-600">18</p>
+       <p class="text-xs text-gray-500">Completed Today</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border text-center">
+       <p class="text-2xl font-bold text-yellow-600">07</p>
+       <p class="text-xs text-gray-500">Pending Forms</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border text-center">
+       <p class="text-2xl font-bold text-gray-500">05</p>
+       <p class="text-xs text-gray-500">Draft Forms</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border text-center">
+       <p class="text-2xl font-bold text-blue-600">06</p>
+       <p class="text-xs text-gray-500">Recently Accessed</p>
+      </div>
+     </div>
+     <h3 class="font-semibold mb-3" style="color:var(--maroon)">Admission Forms</h3>
+     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6" id="admission-forms"></div>
+     <h3 class="font-semibold mb-3" style="color:var(--maroon)">Clinical Assessment Forms</h3>
+     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6" id="assessment-forms"></div>
+    </div><!-- Discharge Summary View -->
+    <div id="view-discharge" class="view">
+     <button onclick="showView('patients')" class="text-sm mb-3 flex items-center gap-1" style="color:var(--maroon)"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Patient List</button>
+     <div class="flex items-center justify-between mb-4">
+      <div>
+       <h1 data-template-id="discharge-title" class="canva-text text-2xl font-bold text-gray-900"></h1>
+       <p data-template-id="discharge-subtitle" class="canva-text text-sm text-gray-500"></p>
+      </div>
+      <div class="flex gap-2">
+       <button class="px-4 py-2 border rounded-lg text-sm font-medium flex items-center gap-2"><i data-lucide="printer" class="w-4 h-4"></i>Print / PDF</button> <button class="px-4 py-2 border rounded-lg text-sm font-medium flex items-center gap-2"><i data-lucide="download" class="w-4 h-4"></i>Download</button>
+      </div>
+     </div>
+     <div class="bg-white rounded-xl shadow-sm p-5 mb-4">
+      <div class="flex items-start gap-4">
+       <img data-template-id="discharge-avatar" class="canva-image w-14 h-14 rounded-full object-cover" loading="lazy">
+       <div class="flex-1">
+        <h2 class="text-lg font-bold">Mrs. Deepali Deshmukh ♀</h2>
+        <p class="text-sm text-gray-500">UHID: ANXIP2505001 | IP No: IPD-2026-001245</p>
+        <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-600">
+         <span>46 Y | 27 Mar 1980</span><span>B+</span><span>8080107733</span><span>Indian</span><span>Star Health</span>
+        </div>
+       </div><span class="px-3 py-1 text-xs font-semibold rounded-full border border-green-300 text-green-700">DISCHARGED</span>
+      </div>
+     </div>
+     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="lg:col-span-2 space-y-4">
+       <div class="bg-white rounded-xl shadow-sm p-4">
+        <h3 class="font-semibold mb-3" style="color:var(--maroon)">Patient Summary</h3>
+        <div class="text-sm space-y-2">
+         <p><strong>Admission Diagnosis:</strong> Acute Gastroenteritis with Dehydration</p>
+         <p><strong>Discharge Diagnosis:</strong> Acute Gastroenteritis – Resolved</p>
+         <div class="grid grid-cols-2 gap-2 mt-3">
+          <div><span class="text-gray-500">Condition at Discharge</span><br><span class="text-green-600 font-medium">Improved</span>
+          </div>
+          <div><span class="text-gray-500">Mode of Discharge</span><br><span class="font-medium">Discharged</span>
+          </div>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl shadow-sm p-4">
+        <h3 class="font-semibold mb-3" style="color:var(--maroon)">Hospital Course</h3>
+        <p class="text-sm text-gray-700 leading-relaxed">Patient was admitted with complaints of vomiting, loose motions and abdominal pain since morning. On evaluation diagnosed with Acute Gastroenteritis with Dehydration. Treated with IV fluids, antiemetics and supportive care. Patient responded well to treatment. Symptoms improved and patient is hemodynamically stable. Tolerating oral diet well.</p>
+       </div>
+       <div class="bg-white rounded-xl shadow-sm p-4">
+        <h3 class="font-semibold mb-3" style="color:var(--maroon)">Medications at Discharge</h3>
+        <table class="w-full text-sm">
+         <thead>
+          <tr class="border-b">
+           <th class="text-left py-2">Medication</th>
+           <th class="text-left py-2">Dose</th>
+           <th class="text-left py-2">Frequency</th>
+           <th class="text-left py-2">Duration</th>
+          </tr>
+         </thead>
+         <tbody>
+          <tr class="border-b">
+           <td class="py-2">Tab. Pantoprazole 40 mg</td>
+           <td>1 Tablet</td>
+           <td>Once Daily</td>
+           <td>5 Days</td>
+          </tr>
+          <tr class="border-b">
+           <td class="py-2">Tab. Ondansetron 4 mg</td>
+           <td>1 Tablet</td>
+           <td>Twice Daily</td>
+           <td>3 Days</td>
+          </tr>
+          <tr>
+           <td class="py-2">Tab. Paracetamol 650 mg</td>
+           <td>1 Tablet</td>
+           <td>SOS</td>
+           <td>3 Days</td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+       <div class="bg-white rounded-xl shadow-sm p-4">
+        <h3 class="font-semibold mb-3" style="color:var(--maroon)">Advice on Discharge</h3>
+        <ul class="text-sm space-y-1 text-gray-700">
+         <li>✓ Take medications as prescribed.</li>
+         <li>✓ Drink plenty of fluids and maintain hydration.</li>
+         <li>✓ Avoid spicy, oily and heavy food for next 2–3 days.</li>
+         <li>✓ Rest and avoid strenuous activity.</li>
+         <li>✓ Follow up with the doctor if symptoms recur or worsen.</li>
+        </ul>
+       </div>
+      </div>
+      <div class="space-y-4">
+       <div class="bg-white rounded-xl shadow-sm p-4">
+        <h3 class="font-semibold mb-3" style="color:var(--maroon)">Discharge Details</h3>
+        <div class="text-sm space-y-2">
+         <div><span class="text-gray-500">Discharge Date &amp; Time</span><br><span class="font-medium">22 Jun 2026, 11:30 AM</span>
+         </div>
+         <div><span class="text-gray-500">Mode of Transport</span><br><span class="font-medium">By Walk</span>
+         </div>
+         <div><span class="text-gray-500">Discharged By</span><br><span class="font-medium">Dr. Shridhar Deshmukh</span>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl shadow-sm p-4">
+        <h3 class="font-semibold mb-3" style="color:var(--maroon)">Final Bill Summary</h3>
+        <div class="text-sm space-y-2">
+         <div class="flex justify-between"><span class="text-gray-500">Total Charges</span><span>₹ 18,450.00</span>
+         </div>
+         <div class="flex justify-between"><span class="text-gray-500">Discount</span><span>₹ 1,200.00</span>
+         </div>
+         <div class="flex justify-between"><span class="text-gray-500">Net Charges</span><span class="font-semibold">₹ 17,250.00</span>
+         </div>
+         <div class="flex justify-between"><span class="text-gray-500">Paid Amount</span><span>₹ 17,250.00</span>
+         </div>
+         <div class="flex justify-between font-semibold"><span>Balance</span><span class="text-green-600">₹ 0.00</span>
+         </div>
+        </div>
+       </div>
+       <div class="bg-white rounded-xl shadow-sm p-4">
+        <h3 class="font-semibold mb-3" style="color:var(--maroon)">Follow Up</h3>
+        <div class="text-sm space-y-1">
+         <p><strong>27 Jun 2026</strong> | 11:00 AM</p>
+         <p>Dr. Shridhar Deshmukh</p>
+         <p class="text-gray-500">General Medicine</p>
+        </div>
+       </div><button data-template-id="print-discharge-btn" class="canva-button w-full py-3 rounded-lg text-white font-semibold" style="background:var(--maroon)"></button>
+      </div>
+     </div>
+    </div>
+   </main>
+  </div><!-- Footer -->
+  <footer data-template-id="footer" class="canva-footer w-full text-center py-4 text-xs text-gray-500 border-t bg-white"></footer>
+  <script src="/_sdk/719055fef2a85d14.editing_sdk.js" integrity="sha512-kFqrdGgIiTOsu307feB5Cy3JVP9IayftsmCIZ0csxYBGuBmJQPhyvcnmKR8F0fTW97h5s1gAvz3SumI8zJ6OxQ=="></script>
+  <script>
+    const patients = [
+        { uhid:'ANXIP2505001', bed:'201A', age:'58 Y', name:'Rajesh Kumar', consultant:'Dr. Amit Verma', diagnosis:'Type 2 Diabetes Mellitus', dept:'2nd Floor - General Ward' },
+        { uhid:'ANXIP2505002', bed:'203B', age:'46 Y', name:'Meena Sharma', consultant:'Dr. Neha Kapoor', diagnosis:'Hypertension', dept:'2nd Floor - General Ward' },
+        { uhid:'ANXIP2505003', bed:'ICU-05', age:'67 Y', name:'Suresh Patel', consultant:'Dr. Rahul Mehta', diagnosis:'Acute Respiratory Failure', dept:'ICU - 1' },
+        { uhid:'ANXIP2505004', bed:'101A', age:'73 Y', name:'Devendra Singh', consultant:'Dr. Priya Nair', diagnosis:'Pneumonia', dept:'1st Floor - General Ward' },
+        { uhid:'ANXIP2505005', bed:'ICU-02', age:'52 Y', name:'Anita Desai', consultant:'Dr. Amit Verma', diagnosis:'Sepsis', dept:'ICU - 1' },
+        { uhid:'ANXIP2505006', bed:'302C', age:'60 Y', name:'Mahesh Gupta', consultant:'Dr. Neha Kapoor', diagnosis:'Coronary Artery Disease', dept:'3rd Floor - Cardiology Ward' },
+        { uhid:'ANXIP2505007', bed:'204A', age:'39 Y', name:'Pooja Rani', consultant:'Dr. Rahul Mehta', diagnosis:'Appendicitis', dept:'2nd Floor - General Ward' },
+        { uhid:'ANXIP2505008', bed:'101B', age:'65 Y', name:'Kailash Joshi', consultant:'Dr. Priya Nair', diagnosis:'COPD Exacerbation', dept:'1st Floor - General Ward' },
+    ];
+
+    function renderPatients(filter='') {
+        const tbody = document.getElementById('patient-table-body');
+        const filtered = patients.filter(p => !filter || Object.values(p).some(v => v.toLowerCase().includes(filter.toLowerCase())));
+        tbody.innerHTML = filtered.map(p => `
+            <tr class="border-b hover:bg-gray-50 cursor-pointer" onclick="showDetail('${p.uhid}')">
+                <td class="px-4 py-3 font-medium">${p.uhid}</td>
+                <td class="px-4 py-3">${p.bed}</td>
+                <td class="px-4 py-3">${p.age}</td>
+                <td class="px-4 py-3 font-medium">${p.name}</td>
+                <td class="px-4 py-3">${p.consultant}</td>
+                <td class="px-4 py-3">${p.diagnosis}</td>
+                <td class="px-4 py-3">${p.dept}</td>
+                <td class="px-4 py-3"><button class="text-gray-400">⋮</button></td>
+            </tr>`).join('');
+    }
+
+    function showView(view) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-'+view).classList.add('active');
+        document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+        event.target.closest('.sidebar-item')?.classList.add('active');
+    }
+
+    function showDetail(uhid) {
+        const p = patients.find(x => x.uhid === uhid);
+        if(p) {
+            document.getElementById('detail-name').textContent = p.name;
+            document.getElementById('detail-uhid').textContent = 'UHID: '+p.uhid;
+            showView('detail');
+        }
+    }
+
+    // Forms page
+    const formCards = [
+        {name:'Admission Form', desc:'Capture patient admission details.'},
+        {name:'Consent Form', desc:'General consent for treatment.'},
+        {name:'Patient Registration', desc:'Patient demographic info.'},
+        {name:'Insurance Form', desc:'Insurance details and authorization.'},
+        {name:'Privacy Policy Consent', desc:'Patient privacy and data usage.'},
+    ];
+    const assessCards = [
+        {name:'History & Physical', desc:'History and physical examination.'},
+        {name:'Pain Assessment', desc:'Assess and document pain level.'},
+        {name:'Risk Assessment', desc:'Evaluate patient risk factors.'},
+        {name:'Fall Risk Assessment', desc:'Assess patient fall risk.'},
+        {name:'Nutritional Assessment', desc:'Nutritional status evaluation.'},
+    ];
+    function renderForms() {
+        const render = (cards, containerId) => {
+            document.getElementById(containerId).innerHTML = cards.map(c => `
+                <div class="bg-white rounded-xl border p-4 flex flex-col">
+                    <h4 class="font-semibold text-sm mb-1">${c.name}</h4>
+                    <p class="text-xs text-gray-500 flex-1">${c.desc}</p>
+                    <button class="mt-3 w-full py-2 border rounded-lg text-sm font-medium" style="border-color:var(--maroon);color:var(--maroon)">Use Form</button>
+                </div>`).join('');
+        };
+        render(formCards, 'admission-forms');
+        render(assessCards, 'assessment-forms');
+    }
+
+    // OPD patients data
+    const opdPatients = [
+        { token:'A-101', name:'Suresh Verma', age:'42 Y', dept:'General Medicine', doctor:'Dr. Amit Verma', status:'Waiting' },
+        { token:'A-102', name:'Priya Singh', age:'28 Y', dept:'Cardiology', doctor:'Dr. Neha Kapoor', status:'In Progress' },
+        { token:'A-103', name:'Ramesh Patel', age:'55 Y', dept:'General Medicine', doctor:'Dr. Amit Verma', status:'Completed' },
+        { token:'A-104', name:'Kavya Nair', age:'35 Y', dept:'Orthopedics', doctor:'Dr. Rahul Mehta', status:'Waiting' },
+    ];
+
+    function renderOPDPatients(filter='') {
+        const tbody = document.getElementById('opd-table-body');
+        const filtered = opdPatients.filter(p => !filter || Object.values(p).some(v => v.toLowerCase().includes(filter.toLowerCase())));
+        tbody.innerHTML = filtered.map(p => `
+            <tr class="border-b hover:bg-gray-50">
+                <td class="px-4 py-3 font-medium">${p.token}</td>
+                <td class="px-4 py-3">${p.name}</td>
+                <td class="px-4 py-3">${p.age}</td>
+                <td class="px-4 py-3">${p.dept}</td>
+                <td class="px-4 py-3">${p.doctor}</td>
+                <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-medium ${p.status === 'Completed' ? 'bg-green-100 text-green-700' : p.status === 'In Progress' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}">${p.status}</span></td>
+                <td class="px-4 py-3"><button class="text-gray-400">⋮</button></td>
+            </tr>`).join('');
+    }
+
+    // Init
+    document.getElementById('patient-search').addEventListener('input', e => renderPatients(e.target.value));
+    document.getElementById('reg-form').addEventListener('submit', e => { e.preventDefault(); showView('patients'); });
+    if(document.getElementById('opd-search')) {
+        document.getElementById('opd-search').addEventListener('input', e => renderOPDPatients(e.target.value));
+    }
+    renderPatients();
+    renderOPDPatients();
+    renderForms();
+    lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a185118aa7adb6fe',t:'MTc4MzU3NjQwOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

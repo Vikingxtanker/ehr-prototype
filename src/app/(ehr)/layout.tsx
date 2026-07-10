@@ -1,59 +1,45 @@
+"use client";
+
 import type { ReactNode } from "react";
 
-import AppSidebar from "@/components/layout/AppSidebar";
-import AppHeader from "@/components/layout/AppHeader";
+import { Sidebar } from "@/components/admin-panel/sidebar";
+import { Navbar } from "@/components/admin-panel/navbar";
+
+import { useSidebar } from "@/hooks/use-sidebar";
+import { useStore } from "@/hooks/use-store";
+import { cn } from "@/lib/utils";
 
 export default function EHRLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  /*
-    Temporary demo user.
-    Later this will come from authentication/session.
-  */
+  const sidebar = useStore(useSidebar, (x) => x);
 
-  const currentUser = {
-    name: "Dr. Rajesh Shah",
-    role: "Cardiologist",
-    navigationRole: "doctor" as const,
-  };
+  if (!sidebar) return null;
+
+  const { getOpenState, settings } = sidebar;
 
   return (
-    <div className="flex h-screen bg-[#f4efee]">
+    <div className="min-h-screen bg-[#f4efee]">
 
-      {/* Sidebar */}
+      <Sidebar />
 
-      <AppSidebar
-        role={currentUser.navigationRole}
-      />
-
-      {/* Main Content */}
-
-      <div className="flex min-w-0 flex-1 flex-col">
-
-        <AppHeader
+      <div
+        className={cn(
+          "min-h-screen transition-[margin-left] duration-300 ease-in-out",
+          !settings.disabled &&
+            (getOpenState() ? "lg:ml-[304px]" : "lg:ml-[106px]")
+        )}
+      >
+        <Navbar
           title="Dashboard"
           subtitle="Overview of today's hospital operations"
-          user={{
-            name: currentUser.name,
-            role: currentUser.role,
-          }}
         />
 
-        {/* Page */}
-
-        <main
-          className="
-            flex-1
-            overflow-y-auto
-            bg-[#f4efee]
-            p-8
-          "
-        >
+        <main className="p-8">
           {children}
         </main>
-
       </div>
 
     </div>

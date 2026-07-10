@@ -13,10 +13,14 @@ export default function SmoothScroll() {
       smoothWheel: true,
       wheelMultiplier: 1.2,
 
+      allowNestedScroll: true,
+
       easing: (t) => 1 - Math.pow(1 - t, 6),
 
       prevent: (node) =>
-        Boolean(node.closest("[data-slot='dialog-content']")),
+        Boolean(
+          node.closest("[data-lenis-prevent]")
+        ),
     });
 
     function raf(time: number) {

@@ -1,0 +1,323 @@
+You're actually at a really good point now. The biggest mistake people make with EHRs is immediately building dozens of pages. Instead, we should build the **shell** first and then one module at a time.
+
+Here's the roadmap I'd follow.
+
+---
+
+# ✅ Completed
+
+* Login page
+* Sidebar
+* Top navbar
+* Dashboard layout
+* Dashboard cards (OPD/IPD/Calendar)
+* Project structure
+
+This is the foundation.
+
+---
+
+# Phase 2 — Build the core EHR modules
+
+I would build them in this order:
+
+```
+Dashboard              ✅
+
+↓
+
+Patients ⭐⭐⭐⭐⭐
+
+↓
+
+Patient Details ⭐⭐⭐⭐⭐
+
+↓
+
+Patient Registration ⭐⭐⭐⭐⭐
+
+↓
+
+Appointments
+
+↓
+
+Admissions
+
+↓
+
+Clinical Notes
+
+↓
+
+Discharge Summary
+
+↓
+
+Reports
+
+↓
+
+Settings
+```
+
+Everything else (Laboratory, Pharmacy, Billing, etc.) will connect to the patient module.
+
+---
+
+# Step 1 (Next) — Replace the sidebar menu
+
+Right now it still contains things like:
+
+```
+Posts
+Categories
+Tags
+Users
+```
+
+Replace it with:
+
+```
+Dashboard
+
+Patient Management
+    Patients
+    Registration
+    Appointments
+    Admissions
+
+Clinical
+    Clinical Notes
+    Medication Chart
+    Investigations
+    Vitals
+    Nursing Notes
+
+Discharge
+    Discharge Summary
+
+Administration
+    Reports
+    Settings
+```
+
+This is only navigation, but it immediately makes the application feel like an EHR.
+
+---
+
+# Step 2 — Create empty routes
+
+Don't build the pages yet.
+
+Just create the folders:
+
+```text
+app/(ehr)/
+
+dashboard/
+
+patients/
+    page.tsx
+
+patients/new/
+    page.tsx
+
+appointments/
+    page.tsx
+
+admissions/
+    page.tsx
+
+clinical-notes/
+    page.tsx
+
+discharge/
+    page.tsx
+
+reports/
+    page.tsx
+
+settings/
+    page.tsx
+```
+
+Each page can simply contain:
+
+```tsx
+export default function PatientsPage() {
+  return <div>Patients</div>;
+}
+```
+
+Now the navigation works.
+
+---
+
+# Step 3 — Build Patients List ⭐
+
+This is the most important page in the entire system.
+
+```
+Patients
+────────────────────────────────────
+
+Search
+
+Filters
+
++ Register Patient
+
+────────────────────────────────────
+
+UHID
+
+Patient Name
+
+Age
+
+Gender
+
+Ward
+
+Doctor
+
+Status
+
+────────────────────────────────────
+```
+
+This page will eventually connect to Supabase.
+
+---
+
+# Step 4 — Patient Details
+
+When someone clicks a patient:
+
+```
+/patients/ANX000001
+```
+
+they should see:
+
+```
+Patient Header
+
+Tabs
+
+Overview
+
+Diagnosis
+
+Medications
+
+Investigations
+
+Vitals
+
+Clinical Notes
+
+Nursing
+
+Documents
+```
+
+Every hospital system revolves around this screen.
+
+---
+
+# Step 5 — Patient Registration
+
+This becomes:
+
+```
+General Information
+
+↓
+
+Contact
+
+↓
+
+Emergency Contact
+
+↓
+
+Insurance
+
+↓
+
+Allergies
+
+↓
+
+Medical History
+```
+
+We'll build it with:
+
+* React Hook Form
+* Zod
+* shadcn Form
+
+---
+
+# Step 6 — Supabase
+
+Only after the UI is finished.
+
+Then we'll create tables like:
+
+```
+profiles
+
+patients
+
+appointments
+
+admissions
+
+encounters
+
+vitals
+
+diagnoses
+
+medications
+
+clinical_notes
+
+documents
+```
+
+The UI won't need major changes because we'll already have the correct structure.
+
+---
+
+# What I would **not** build yet
+
+I'd avoid spending time on:
+
+* Laboratory
+* Pharmacy
+* Billing
+* Analytics
+* Reports
+* Notifications
+
+until the patient workflow is complete.
+
+---
+
+# My recommendation
+
+I'd spend the next few sessions building **one excellent Patient Management module** rather than ten incomplete modules.
+
+That means our next goal is:
+
+1. Replace the sidebar with EHR navigation.
+2. Create all the empty routes.
+3. Build a professional **Patients List** page.
+
+Once the Patients module is finished, adding Appointments, Admissions, Clinical Notes, and Discharge becomes much easier because they all revolve around the same patient record. I think this approach will give you a much more convincing EHR prototype than trying to build every feature at once.

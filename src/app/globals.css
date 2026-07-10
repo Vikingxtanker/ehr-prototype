@@ -383,3 +383,12 @@ body {
     transform: rotate(360deg) scale(1);
   }
 }
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
