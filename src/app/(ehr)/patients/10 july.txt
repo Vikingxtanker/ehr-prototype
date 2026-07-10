@@ -1,0 +1,260 @@
+Yes. I actually **wouldn't copy Ruby Hall's UI directly** because it's quite dated (table-heavy, dense, lots of small text). We can keep the workflow while giving it a modern EHR design.
+
+Your Anexra EHR already has a modern dashboard, so the patient list should match that style.
+
+## What I'd build
+
+```
+Patients
+──────────────────────────────────────────────────────────────
+
+[ + Register Patient ]    Search UHID / Name / Phone
+
+┌────────────────────────────────────────────────────────────┐
+│ Active Patients 128 │ IPD 52 │ OPD 61 │ ICU 15 │ Today +9 │
+└────────────────────────────────────────────────────────────┘
+
+Filters
+──────────────────────────────────────────────────────────────
+Department | Ward | Consultant | Status | Date | More Filters
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+│ UHID       Patient             Ward     Doctor      Status      Admit Date     Actions       │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│ AX240001   Rahul Sharma        ICU      Dr Patil    ● Critical  10 Jul 2026    View >       │
+│ AX240002   Priya Desai         302      Dr Shah     ● Stable    09 Jul 2026    View >       │
+│ AX240003   Amit Kulkarni       SICU     Dr Joshi    ● Surgery   09 Jul 2026    View >       │
+└──────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# When clicking a patient
+
+Instead of editing everything in the table, clicking **View** opens the complete EHR.
+
+```
+Patient Summary
+├── Demographics
+├── Timeline
+├── Vitals
+├── Clinical Notes
+├── Orders
+├── Laboratory
+├── Radiology
+├── Medications
+├── MAR
+├── Nursing Notes
+├── Intake / Output
+├── Blood Products
+├── Procedures
+├── Consent
+├── Billing
+└── Discharge
+```
+
+This scales much better than putting every function in the sidebar.
+
+---
+
+# Suggested page structure
+
+```
+src/app/(ehr)/patients/page.tsx
+
+src/components/patients/
+    PatientsHeader.tsx
+    PatientsStats.tsx
+    PatientsFilters.tsx
+    PatientsTable.tsx
+    PatientStatusBadge.tsx
+```
+
+---
+
+# Components
+
+## 1. PatientsHeader
+
+```
+Patients
+
+Manage admitted and registered patients
+
++ Register Patient
+```
+
+---
+
+## 2. PatientsStats
+
+Instead of Ruby Hall's counters:
+
+```
+Total Patients
+128
+
+IPD
+52
+
+OPD
+61
+
+ICU
+15
+
+Today's Admissions
+9
+
+Today's Discharges
+4
+```
+
+---
+
+## 3. Search Bar
+
+One large search:
+
+```
+🔍 Search by
+
+UHID
+Patient Name
+Phone
+MRN
+```
+
+No need for separate search boxes.
+
+---
+
+## 4. Filters
+
+Using shadcn Selects.
+
+```
+Department ▼
+
+Ward ▼
+
+Consultant ▼
+
+Status ▼
+
+Admission Date ▼
+```
+
+---
+
+## 5. DataTable
+
+Columns I'd recommend:
+
+| Column         | Why                                               |
+| -------------- | ------------------------------------------------- |
+| UHID           | Primary identifier                                |
+| Patient        | Name + Age + Sex                                  |
+| Admission Type | OPD/IPD/ER                                        |
+| Ward/Bed       | Current location                                  |
+| Consultant     | Responsible doctor                                |
+| Diagnosis      | Current diagnosis                                 |
+| Status         | Stable / Critical / Surgery / Ready for Discharge |
+| Last Updated   | Useful in EHR                                     |
+| Actions        | View                                              |
+
+Much cleaner than Ruby Hall's 12+ columns.
+
+---
+
+## Status badges
+
+```
+🟢 Stable
+
+🟠 Observation
+
+🔵 Surgery
+
+🔴 Critical
+
+⚫ Discharged
+```
+
+Using shadcn `Badge`.
+
+---
+
+## Actions
+
+Each row
+
+```
+👁 View
+
+⋮
+```
+
+Menu:
+
+```
+View Record
+
+Edit Patient
+
+Transfer
+
+Print Wristband
+
+Discharge
+```
+
+---
+
+# Dummy data
+
+```ts
+const patients = [
+  {
+    id: "AX240001",
+    name: "Rahul Sharma",
+    age: 54,
+    gender: "Male",
+    type: "IPD",
+    ward: "ICU",
+    bed: "ICU-03",
+    doctor: "Dr. Patil",
+    diagnosis: "Pneumonia",
+    status: "Critical",
+    updated: "5 min ago",
+  },
+];
+```
+
+---
+
+# Why this is better than Ruby Hall
+
+Ruby Hall's screen tries to make every action available immediately, which leads to a crowded interface. A modern EHR benefits from separating concerns:
+
+* The **patient list** is optimized for finding and selecting patients.
+* The **patient record** is where all clinical work happens.
+
+That keeps the list fast to scan, works well on different screen sizes, and is easier to extend as you add modules like medications, lab results, nursing notes, and discharge planning.
+
+## I recommend this build order
+
+1. ✅ Sidebar (done)
+2. ✅ Dashboard (done)
+3. **Patients List**
+4. Patient Profile / EHR
+5. Patient Registration
+6. Appointments
+7. Admissions
+8. Clinical Documentation
+9. Orders
+10. Pharmacy
+11. Laboratory
+12. Discharge Summary
+
+This follows the actual clinical workflow while keeping the UI modern and maintainable.
