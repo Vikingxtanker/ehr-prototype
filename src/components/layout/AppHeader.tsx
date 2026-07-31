@@ -1,14 +1,16 @@
 "use client";
 
-import { Bell, CalendarDays, Menu, Search } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+
+import { Bell, CalendarDays, Search } from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 interface AppHeaderProps {
-  title: string;
-  subtitle?: string;
   user?: {
     name: string;
     role: string;
@@ -16,40 +18,43 @@ interface AppHeaderProps {
 }
 
 export default function AppHeader({
-  title,
-  subtitle,
   user,
 }: AppHeaderProps) {
-  return (
-    <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#ece1e2] bg-white/90 px-8 backdrop-blur-xl">
+  const router = useRouter();
 
+  return (
+    <header
+      className="
+        sticky
+        top-0
+        z-30
+        flex
+        h-20
+        items-center
+        justify-between
+        border-b
+        border-[#ece1e2]
+        bg-white/90
+        px-4
+        backdrop-blur-xl
+        sm:px-8
+      "
+    >
       {/* Left */}
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4">
 
-        {/* Mobile Menu */}
+        <div className="flex items-center gap-3">
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+          <SidebarTrigger className="rounded-xl text-[#5e5254] hover:bg-[#f7f3f3] hover:text-[#2b0b08] lg:hidden" />
 
-        {/* Page Title */}
-
-        <div>
-
-          <h1 className="text-3xl font-bold text-[#2b0b08]">
-            {title}
-          </h1>
-
-          {subtitle && (
-            <p className="mt-1 text-sm text-[#87565b]">
-              {subtitle}
-            </p>
-          )}
+          <Image
+            src="/anexra-wordmark.svg"
+            alt="Anexra"
+            width={120}
+            height={30}
+            className="h-auto w-auto lg:hidden"
+          />
 
         </div>
 
@@ -57,7 +62,7 @@ export default function AppHeader({
 
       {/* Right */}
 
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-4">
 
         {/* Search */}
 
@@ -69,6 +74,11 @@ export default function AppHeader({
 
           <Input
             placeholder="Search patients, UHID..."
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                router.push("/patients");
+              }
+            }}
             className="
               h-11
               w-80
@@ -132,11 +142,11 @@ export default function AppHeader({
           <div className="hidden text-left md:block">
 
             <p className="font-semibold text-[#2b0b08]">
-              {user?.name ?? "Administrator"}
+              {user?.name ?? "User"}
             </p>
 
             <p className="text-sm text-[#87565b]">
-              {user?.role ?? "System Administrator"}
+              {user?.role ?? "Role"}
             </p>
 
           </div>

@@ -21,11 +21,11 @@ export default function AuthCallbackPage() {
         } = await supabase.auth.getSession();
 
         if (error || !session) {
-          router.replace("/student/login");
+          router.replace("/");
           return;
         }
 
-        router.replace("/student/dashboard");
+        router.replace("/dashboard");
 
       } catch (error) {
         console.error(
@@ -34,7 +34,7 @@ export default function AuthCallbackPage() {
         );
 
         router.replace(
-          "/student/login"
+          "/"
         );
       }
     };
