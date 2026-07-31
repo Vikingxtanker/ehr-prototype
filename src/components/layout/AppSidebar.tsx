@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -51,6 +51,8 @@ export default function AppSidebar({
 
   const { isMobile, state, setOpen, toggleSidebar } = useSidebar();
 
+  const [persistentOpen, setPersistentOpen] = useState(true);
+
   const tempOpenRef = useRef(false);
 
   function handleMouseEnter() {
@@ -77,14 +79,26 @@ export default function AppSidebar({
     }
   }
 
+  function handleArrowMouseLeave() {
+    if (tempOpenRef.current) {
+      tempOpenRef.current = false;
+
+      setOpen(false);
+    }
+  }
+
   function handleArrowClick() {
     if (tempOpenRef.current) {
       tempOpenRef.current = false;
+
+      setPersistentOpen(true);
 
       setOpen(true);
 
       return;
     }
+
+    setPersistentOpen((prev) => !prev);
 
     toggleSidebar();
   }
@@ -116,6 +130,7 @@ export default function AppSidebar({
         <div
           className="absolute top-[12px] -right-[16px] z-[999]"
           onMouseEnter={handleArrowMouseEnter}
+          onMouseLeave={handleArrowMouseLeave}
         >
           <Button
             onClick={handleArrowClick}
@@ -127,7 +142,7 @@ export default function AppSidebar({
             <ChevronLeft
               className={cn(
                 "h-4 w-4 transition-transform ease-in-out duration-700",
-                state === "collapsed" ? "rotate-180" : "rotate-0",
+                persistentOpen ? "rotate-0" : "rotate-180",
               )}
             />
           </Button>

@@ -267,7 +267,7 @@ export default function PatientsPage() {
             <EmptyContent>
               <EmptyDescription>
                 {patients.length === 0
-                  ? "Register your first patient to start building the IPD roster. Patient data entered here is stored in memory for this session."
+                  ? "Register your first patient to start building the IPD roster. Patient data is saved to the cloud and persists across sessions."
                   : "Try adjusting your search or filters."}
               </EmptyDescription>
             </EmptyContent>

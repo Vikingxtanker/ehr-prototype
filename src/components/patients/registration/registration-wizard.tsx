@@ -19,6 +19,11 @@ import { Button } from "@/components/ui/button";
 import { addPatient } from "@/lib/patients/store";
 import { parseList } from "@/lib/patients/format";
 import {
+  addComplaint,
+  flushClinical,
+} from "@/lib/patients/clinical-store";
+import { getCurrentUserName } from "@/lib/patients/audit";
+import {
   admissionSchema,
   contactSchema,
   defaultValues,
@@ -105,7 +110,7 @@ export function RegistrationWizard() {
     setCurrentStep((step) => step - 1);
   }
 
-  function onSubmit(values: PatientFormValues) {
+  async function onSubmit(values: PatientFormValues) {
     const {
       allergies = "",
       currentMedications = "",
@@ -153,7 +158,15 @@ export function RegistrationWizard() {
       admission,
     };
 
-    const patient = addPatient(input);
+    const patient = await addPatient(input);
+
+    const chiefComplaint = values.chiefComplaint.trim();
+
+    if (chiefComplaint) {
+      addComplaint(patient.id, chiefComplaint, getCurrentUserName());
+
+      await flushClinical(patient.id);
+    }
 
     toast.success(
       `${patient.firstName} ${patient.lastName} registered (${patient.uhid})`,

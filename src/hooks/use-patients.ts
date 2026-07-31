@@ -1,14 +1,19 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 import {
   getPatientsSnapshot,
+  hydratePatients,
   subscribePatients,
 } from "@/lib/patients/store";
 import type { Patient } from "@/lib/types/patient";
 
 export function usePatients(): Patient[] {
+  useEffect(() => {
+    hydratePatients();
+  }, []);
+
   return useSyncExternalStore(
     subscribePatients,
     getPatientsSnapshot,

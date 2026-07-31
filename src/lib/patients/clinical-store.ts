@@ -1,0 +1,444 @@
+"use client";
+
+import { toast } from "sonner";
+
+import { createClient } from "@/lib/supabase/client";
+
+export type OrderStatus = "Ordered" | "Completed" | "Pending" | "Cancelled";
+export type Priority = "STAT" | "Routine" | "Urgent" | "PRN";
+export type MedStatus =
+  | "Prescribed"
+  | "Dispensed"
+  | "Administered"
+  | "Completed"
+  | "Stopped";
+
+export interface AuditFields {
+  createdBy: string;
+  createdAt: string;
+  updatedBy?: string;
+  updatedAt?: string;
+}
+
+export interface Complaint extends AuditFields {
+  id: string;
+  text: string;
+}
+
+export interface Diagnosis extends AuditFields {
+  id: string;
+  text: string;
+  icdCode?: string;
+}
+
+export interface Order extends AuditFields {
+  id: string;
+  date: string;
+  order: string;
+  status: OrderStatus;
+  department: string;
+}
+
+export interface VitalReading extends AuditFields {
+  id: string;
+  height: string;
+  weight: string;
+  bmi: string;
+  temperature: string;
+  heartRate: string;
+  respiratoryRate: string;
+  bloodPressure: string;
+  pulse: string;
+  spo2: string;
+  bloodSugar: string;
+  painScore: string;
+  gcs: string;
+}
+
+export interface Medication extends AuditFields {
+  id: string;
+  drug: string;
+  form?: string;
+  strength?: string;
+  priority: Priority;
+  route: string;
+  frequency: string;
+  unit?: string;
+  frequencyType?: "Daily" | "Weekly";
+  dose: string;
+  schedule: string;
+  duration: string;
+  durationUnit?: "Days" | "Weeks" | "Months";
+  instructions?: string;
+  quantity?: string;
+  remarks?: string;
+  statDose?: boolean;
+  sos?: boolean;
+  patientOwnMed?: boolean;
+  taperDose?: boolean;
+  startDate: string;
+  endDate: string;
+  prescribedBy: string;
+  status: MedStatus;
+  statusBeforeStop?: MedStatus;
+  stoppedBy?: string;
+  stoppedAt?: string;
+}
+
+export interface ClinicalRecords {
+  complaints: Complaint[];
+  diagnoses: Diagnosis[];
+  orders: Order[];
+  vitals: VitalReading[];
+  medications: Medication[];
+}
+
+export const EMPTY_RECORDS: ClinicalRecords = {
+  complaints: [],
+  diagnoses: [],
+  orders: [],
+  vitals: [],
+  medications: [],
+};
+
+const listeners = new Set<() => void>();
+const cache = new Map<string, ClinicalRecords>();
+const writeQueues = new Map<string, Promise<void>>();
+const versions = new Map<string, number>();
+const loading = new Set<string>();
+
+function backfillCreatedAt<T extends AuditFields>(
+  items: unknown[] | undefined,
+): T[] {
+  return (items ?? []).map((item) => {
+    const record = (item ?? {}) as Partial<T> &
+      Record<string, unknown> & { addedAt?: string; recordedAt?: string };
+
+    return {
+      ...record,
+      createdAt:
+        record.createdAt ??
+        record.addedAt ??
+        record.recordedAt ??
+        new Date(0).toISOString(),
+      createdBy: record.createdBy ?? "Unknown",
+    } as T;
+  });
+}
+
+function normalize(records: unknown): ClinicalRecords {
+  const parsed = (records ?? {}) as Partial<ClinicalRecords>;
+
+  return {
+    complaints: backfillCreatedAt<Complaint>(parsed.complaints),
+    diagnoses: backfillCreatedAt<Diagnosis>(parsed.diagnoses),
+    orders: backfillCreatedAt<Order>(parsed.orders),
+    vitals: backfillCreatedAt<VitalReading>(parsed.vitals),
+    medications: backfillCreatedAt<Medication>(parsed.medications),
+  };
+}
+
+export function getClinicalRecordsSnapshot(
+  patientId: string,
+): ClinicalRecords {
+  return cache.get(patientId) ?? EMPTY_RECORDS;
+}
+
+export function hydrateClinicalRecords(patientId: string): void {
+  if (loading.has(patientId)) return;
+
+  loading.add(patientId);
+
+  const versionAtStart = versions.get(patientId) ?? 0;
+
+  createClient()
+    .from("clinical_records")
+    .select("data")
+    .eq("patient_id", patientId)
+    .maybeSingle()
+    .then(
+      (
+        result: {
+          data: { data?: unknown } | null;
+          error: { message: string } | null;
+        },
+      ) => {
+        const { data, error } = result;
+
+        if (
+          !error &&
+          data &&
+          (versions.get(patientId) ?? 0) === versionAtStart
+        ) {
+          cache.set(patientId, normalize(data.data));
+        }
+      },
+    )
+    .catch(() => {
+      // Keep whatever is currently cached.
+    })
+    .finally(() => {
+      loading.delete(patientId);
+      emit();
+    });
+}
+
+export function subscribeClinicalRecords(listener: () => void): () => void {
+  listeners.add(listener);
+
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function emit() {
+  for (const listener of listeners) listener();
+}
+
+function update(
+  patientId: string,
+  updater: (records: ClinicalRecords) => ClinicalRecords,
+): void {
+  const current = cache.get(patientId) ?? { ...EMPTY_RECORDS };
+  const next = updater(current);
+
+  cache.set(patientId, next);
+  versions.set(patientId, (versions.get(patientId) ?? 0) + 1);
+
+  enqueuePersist(patientId);
+  emit();
+}
+
+function enqueuePersist(patientId: string): void {
+  const previous = writeQueues.get(patientId) ?? Promise.resolve();
+
+  const next = previous
+    .then(() => persist(patientId))
+    .catch((error) => {
+      console.error(error);
+
+      toast.error("Could not sync clinical data to the cloud.");
+    });
+
+  writeQueues.set(patientId, next);
+}
+
+async function persist(patientId: string): Promise<void> {
+  const snapshot = cache.get(patientId) ?? { ...EMPTY_RECORDS };
+
+  const { error } = await createClient()
+    .from("clinical_records")
+    .upsert(
+      {
+        patient_id: patientId,
+        data: snapshot,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "patient_id" },
+    );
+
+  if (error) throw error;
+}
+
+export function flushClinical(patientId: string): Promise<void> {
+  return writeQueues.get(patientId) ?? Promise.resolve();
+}
+
+function now(): string {
+  return new Date().toISOString();
+}
+
+function markEdited<T extends AuditFields>(record: T, actor: string): T {
+  return {
+    ...record,
+    updatedBy: actor,
+    updatedAt: now(),
+  };
+}
+
+export function addComplaint(
+  patientId: string,
+  text: string,
+  actor: string,
+): void {
+  const complaint: Complaint = {
+    id: crypto.randomUUID(),
+    text,
+    createdAt: now(),
+    createdBy: actor,
+  };
+
+  update(patientId, (records) => ({
+    ...records,
+    complaints: [complaint, ...records.complaints],
+  }));
+}
+
+export function removeComplaint(patientId: string, id: string): void {
+  update(patientId, (records) => ({
+    ...records,
+    complaints: records.complaints.filter((item) => item.id !== id),
+  }));
+}
+
+export function addDiagnosis(
+  patientId: string,
+  text: string,
+  icdCode: string,
+  actor: string,
+): void {
+  const diagnosis: Diagnosis = {
+    id: crypto.randomUUID(),
+    text,
+    icdCode: icdCode.trim() || undefined,
+    createdAt: now(),
+    createdBy: actor,
+  };
+
+  update(patientId, (records) => ({
+    ...records,
+    diagnoses: [diagnosis, ...records.diagnoses],
+  }));
+}
+
+export function removeDiagnosis(patientId: string, id: string): void {
+  update(patientId, (records) => ({
+    ...records,
+    diagnoses: records.diagnoses.filter((item) => item.id !== id),
+  }));
+}
+
+export function addOrder(
+  patientId: string,
+  input: { order: string; status: OrderStatus; department: string },
+  actor: string,
+): void {
+  const timestamp = now();
+
+  const order: Order = {
+    id: crypto.randomUUID(),
+    date: timestamp,
+    order: input.order,
+    status: input.status,
+    department: input.department,
+    createdAt: timestamp,
+    createdBy: actor,
+  };
+
+  update(patientId, (records) => ({
+    ...records,
+    orders: [order, ...records.orders],
+  }));
+}
+
+export function removeOrder(patientId: string, id: string): void {
+  update(patientId, (records) => ({
+    ...records,
+    orders: records.orders.filter((item) => item.id !== id),
+  }));
+}
+
+export function addVitalReading(
+  patientId: string,
+  values: Omit<VitalReading, "id" | keyof AuditFields>,
+  actor: string,
+): void {
+  const reading: VitalReading = {
+    ...values,
+    id: crypto.randomUUID(),
+    createdAt: now(),
+    createdBy: actor,
+  };
+
+  update(patientId, (records) => ({
+    ...records,
+    vitals: [reading, ...records.vitals],
+  }));
+}
+
+export function addMedication(
+  patientId: string,
+  input: Omit<Medication, "id" | keyof AuditFields>,
+  actor: string,
+): void {
+  const medication: Medication = {
+    ...input,
+    id: crypto.randomUUID(),
+    createdAt: now(),
+    createdBy: actor,
+  };
+
+  update(patientId, (records) => ({
+    ...records,
+    medications: [medication, ...records.medications],
+  }));
+}
+
+export function updateMedication(
+  patientId: string,
+  id: string,
+  patch: Partial<Omit<Medication, "id" | keyof AuditFields>>,
+  actor: string,
+): void {
+  update(patientId, (records) => ({
+    ...records,
+    medications: records.medications.map((item) =>
+      item.id === id ? markEdited({ ...item, ...patch }, actor) : item,
+    ),
+  }));
+}
+
+export function removeMedication(patientId: string, id: string): void {
+  update(patientId, (records) => ({
+    ...records,
+    medications: records.medications.filter((item) => item.id !== id),
+  }));
+}
+
+export function stopMedication(
+  patientId: string,
+  id: string,
+  actor: string,
+): void {
+  const timestamp = now();
+
+  update(patientId, (records) => ({
+    ...records,
+    medications: records.medications.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            status: "Stopped" as MedStatus,
+            statusBeforeStop: item.status,
+            stoppedBy: actor,
+            stoppedAt: timestamp,
+            updatedBy: actor,
+            updatedAt: timestamp,
+          }
+        : item,
+    ),
+  }));
+}
+
+export function resumeMedication(
+  patientId: string,
+  id: string,
+  actor: string,
+): void {
+  update(patientId, (records) => ({
+    ...records,
+    medications: records.medications.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            status: item.statusBeforeStop ?? ("Prescribed" as MedStatus),
+            statusBeforeStop: undefined,
+            stoppedBy: undefined,
+            stoppedAt: undefined,
+            updatedBy: actor,
+            updatedAt: now(),
+          }
+        : item,
+    ),
+  }));
+}
