@@ -216,7 +216,7 @@ export default function AppSidebar({
                           className={cn(
                             "h-11 rounded-xl text-sm",
                             active &&
-                              "bg-gradient-to-r from-[#4c1711] to-[#6a2f33] text-white shadow-lg shadow-[#4c1711]/20 hover:bg-gradient-to-r hover:from-[#4c1711] hover:to-[#6a2f33] hover:text-white",
+                              "bg-gradient-to-r from-[#4c1711] to-[#6a2f33] text-white shadow-lg shadow-[#4c1711]/20 data-active:text-white hover:bg-gradient-to-r hover:from-[#4c1711] hover:to-[#6a2f33] hover:text-white data-active:hover:text-white",
                           )}
                         >
                           <Link href={item.href}>

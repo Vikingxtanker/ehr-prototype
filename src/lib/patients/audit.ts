@@ -1,9 +1,9 @@
 import { getSession } from "@/lib/auth/demo-auth";
 
-const istFormatter = new Intl.DateTimeFormat("en-IN", {
+const istFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Kolkata",
   day: "2-digit",
-  month: "short",
+  month: "2-digit",
   year: "numeric",
   hour: "2-digit",
   minute: "2-digit",

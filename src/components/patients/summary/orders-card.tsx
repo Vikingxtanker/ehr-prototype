@@ -74,6 +74,7 @@ export function OrdersCard({
     <SectionCard
       title="Current Orders"
       className={className}
+      bodyClassName="overflow-y-auto"
       actions={
         <button
           type="button"

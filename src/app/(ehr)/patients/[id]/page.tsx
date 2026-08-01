@@ -18,6 +18,8 @@ import {
   PatientSummary,
 } from "@/components/patients/summary";
 import { usePatient } from "@/hooks/use-patients";
+import { VitalsCharting } from "@/components/patients/vitals";
+import { MarChart } from "@/components/patients/mar";
 
 export default function PatientDetailPage({
   params,
@@ -53,8 +55,6 @@ export default function PatientDetailPage({
     );
   }
 
-  const initials = `${patient.firstName.charAt(0)}${patient.lastName.charAt(0)}`.toUpperCase();
-
   const activeTabConfig =
     PATIENT_TABS.find((tab) => tab.id === activeTab) ?? PATIENT_TABS[0];
 
@@ -86,7 +86,11 @@ export default function PatientDetailPage({
 
       {/* Content */}
       {activeTab === "summary" ? (
-        <PatientSummary patient={patient} initials={initials} />
+        <PatientSummary patient={patient} />
+      ) : activeTab === "vitals" ? (
+        <VitalsCharting patient={patient} />
+      ) : activeTab === "mar" ? (
+        <MarChart patient={patient} />
       ) : (
         <PatientModulePlaceholder tab={activeTabConfig} />
       )}

@@ -23,12 +23,18 @@ export interface AuditFields {
 export interface Complaint extends AuditFields {
   id: string;
   text: string;
+  resolved?: boolean;
+  resolvedBy?: string;
+  resolvedAt?: string;
 }
 
 export interface Diagnosis extends AuditFields {
   id: string;
   text: string;
   icdCode?: string;
+  resolved?: boolean;
+  resolvedBy?: string;
+  resolvedAt?: string;
 }
 
 export interface Order extends AuditFields {
@@ -39,6 +45,16 @@ export interface Order extends AuditFields {
   department: string;
 }
 
+export type VitalFieldKey = Exclude<
+  keyof VitalReading,
+  "id" | "createdBy" | "createdAt" | "updatedBy" | "updatedAt" | "fieldAudit"
+>;
+
+export interface FieldAudit {
+  at: string;
+  by: string;
+}
+
 export interface VitalReading extends AuditFields {
   id: string;
   height: string;
@@ -47,13 +63,25 @@ export interface VitalReading extends AuditFields {
   temperature: string;
   heartRate: string;
   respiratoryRate: string;
-  bloodPressure: string;
-  pulse: string;
+  systolicBP: string;
+  diastolicBP: string;
   spo2: string;
   bloodSugar: string;
   painScore: string;
   gcs: string;
+  gcsEye: string;
+  gcsVerbal: string;
+  gcsMotor: string;
+  avpu: string;
+  urineOutput: string;
+  remarks: string;
+  fieldAudit?: Partial<Record<VitalFieldKey, FieldAudit>>;
 }
+
+export type VitalValues = Omit<
+  VitalReading,
+  "id" | keyof AuditFields | "fieldAudit"
+>;
 
 export interface Medication extends AuditFields {
   id: string;
@@ -80,9 +108,33 @@ export interface Medication extends AuditFields {
   endDate: string;
   prescribedBy: string;
   status: MedStatus;
+  held?: boolean;
   statusBeforeStop?: MedStatus;
   stoppedBy?: string;
   stoppedAt?: string;
+}
+
+export type MARAdministrationStatus =
+  | "Scheduled"
+  | "Administered"
+  | "Missed"
+  | "Delayed"
+  | "Held";
+
+export interface MedicationAdministration extends AuditFields {
+  id: string;
+  medicationId: string;
+  scheduledAt: string;
+  status: MARAdministrationStatus;
+  givenAt?: string;
+  dose?: string;
+  route?: string;
+  administeredBy?: string;
+  batchNumber?: string;
+  expiryDate?: string;
+  site?: string;
+  remarks?: string;
+  reason?: string;
 }
 
 export interface ClinicalRecords {
@@ -91,6 +143,7 @@ export interface ClinicalRecords {
   orders: Order[];
   vitals: VitalReading[];
   medications: Medication[];
+  administrations: MedicationAdministration[];
 }
 
 export const EMPTY_RECORDS: ClinicalRecords = {
@@ -99,6 +152,7 @@ export const EMPTY_RECORDS: ClinicalRecords = {
   orders: [],
   vitals: [],
   medications: [],
+  administrations: [],
 };
 
 const listeners = new Set<() => void>();
@@ -126,6 +180,28 @@ function backfillCreatedAt<T extends AuditFields>(
   });
 }
 
+function migrateVitals(vitals: unknown[] | undefined): VitalReading[] {
+  return (vitals ?? []).map((item) => {
+    const record = (item ?? {}) as VitalReading & {
+      bloodPressure?: string;
+    };
+
+    const { bloodPressure, ...rest } = record;
+
+    if (!rest.systolicBP && !rest.diastolicBP && bloodPressure) {
+      const [sys, dia] = bloodPressure.split("/");
+
+      return {
+        ...rest,
+        systolicBP: (sys ?? "").trim(),
+        diastolicBP: (dia ?? "").trim(),
+      };
+    }
+
+    return rest;
+  });
+}
+
 function normalize(records: unknown): ClinicalRecords {
   const parsed = (records ?? {}) as Partial<ClinicalRecords>;
 
@@ -133,8 +209,11 @@ function normalize(records: unknown): ClinicalRecords {
     complaints: backfillCreatedAt<Complaint>(parsed.complaints),
     diagnoses: backfillCreatedAt<Diagnosis>(parsed.diagnoses),
     orders: backfillCreatedAt<Order>(parsed.orders),
-    vitals: backfillCreatedAt<VitalReading>(parsed.vitals),
+    vitals: backfillCreatedAt<VitalReading>(migrateVitals(parsed.vitals)),
     medications: backfillCreatedAt<Medication>(parsed.medications),
+    administrations: backfillCreatedAt<MedicationAdministration>(
+      parsed.administrations,
+    ),
   };
 }
 
@@ -281,6 +360,55 @@ export function removeComplaint(patientId: string, id: string): void {
   }));
 }
 
+export function updateComplaint(
+  patientId: string,
+  id: string,
+  text: string,
+  actor: string,
+): void {
+  update(patientId, (records) => ({
+    ...records,
+    complaints: records.complaints.map((item) =>
+      item.id === id ? markEdited({ ...item, text }, actor) : item,
+    ),
+  }));
+}
+
+export function toggleResolvedComplaint(
+  patientId: string,
+  id: string,
+  actor: string,
+): void {
+  const timestamp = now();
+
+  update(patientId, (records) => ({
+    ...records,
+    complaints: records.complaints.map((item) => {
+      if (item.id !== id) return item;
+
+      if (item.resolved) {
+        return {
+          ...item,
+          resolved: false,
+          resolvedBy: undefined,
+          resolvedAt: undefined,
+          updatedBy: actor,
+          updatedAt: timestamp,
+        };
+      }
+
+      return {
+        ...item,
+        resolved: true,
+        resolvedBy: actor,
+        resolvedAt: timestamp,
+        updatedBy: actor,
+        updatedAt: timestamp,
+      };
+    }),
+  }));
+}
+
 export function addDiagnosis(
   patientId: string,
   text: string,
@@ -305,6 +433,61 @@ export function removeDiagnosis(patientId: string, id: string): void {
   update(patientId, (records) => ({
     ...records,
     diagnoses: records.diagnoses.filter((item) => item.id !== id),
+  }));
+}
+
+export function updateDiagnosis(
+  patientId: string,
+  id: string,
+  text: string,
+  icdCode: string,
+  actor: string,
+): void {
+  update(patientId, (records) => ({
+    ...records,
+    diagnoses: records.diagnoses.map((item) =>
+      item.id === id
+        ? markEdited(
+            { ...item, text, icdCode: icdCode.trim() || undefined },
+            actor,
+          )
+        : item,
+    ),
+  }));
+}
+
+export function toggleResolvedDiagnosis(
+  patientId: string,
+  id: string,
+  actor: string,
+): void {
+  const timestamp = now();
+
+  update(patientId, (records) => ({
+    ...records,
+    diagnoses: records.diagnoses.map((item) => {
+      if (item.id !== id) return item;
+
+      if (item.resolved) {
+        return {
+          ...item,
+          resolved: false,
+          resolvedBy: undefined,
+          resolvedAt: undefined,
+          updatedBy: actor,
+          updatedAt: timestamp,
+        };
+      }
+
+      return {
+        ...item,
+        resolved: true,
+        resolvedBy: actor,
+        resolvedAt: timestamp,
+        updatedBy: actor,
+        updatedAt: timestamp,
+      };
+    }),
   }));
 }
 
@@ -338,21 +521,87 @@ export function removeOrder(patientId: string, id: string): void {
   }));
 }
 
+function buildFieldAudit(
+  values: VitalValues,
+  timestamp: string,
+  actor: string,
+  previous?: VitalReading,
+): Partial<Record<VitalFieldKey, FieldAudit>> {
+  const audit: Partial<Record<VitalFieldKey, FieldAudit>> = {};
+
+  for (const key of Object.keys(values) as VitalFieldKey[]) {
+    const value = (values[key] ?? "").trim();
+
+    if (value === "") continue;
+
+    const prior = previous?.fieldAudit?.[key];
+    const unchanged =
+      previous !== undefined && (previous[key] ?? "").trim() === value;
+
+    audit[key] =
+      unchanged && prior ? prior : { at: timestamp, by: actor };
+  }
+
+  return audit;
+}
+
 export function addVitalReading(
   patientId: string,
-  values: Omit<VitalReading, "id" | keyof AuditFields>,
+  values: VitalValues,
   actor: string,
-): void {
+  previous?: VitalReading,
+): string {
+  const timestamp = now();
+
   const reading: VitalReading = {
     ...values,
     id: crypto.randomUUID(),
-    createdAt: now(),
+    createdAt: timestamp,
     createdBy: actor,
+    fieldAudit: buildFieldAudit(values, timestamp, actor, previous),
   };
 
   update(patientId, (records) => ({
     ...records,
     vitals: [reading, ...records.vitals],
+  }));
+
+  return reading.id;
+}
+
+export function updateVitalReading(
+  patientId: string,
+  id: string,
+  patch: Partial<VitalValues>,
+  actor: string,
+): void {
+  const timestamp = now();
+
+  update(patientId, (records) => ({
+    ...records,
+    vitals: records.vitals.map((item) => {
+      if (item.id !== id) return item;
+
+      const next = markEdited({ ...item, ...patch }, actor);
+      const audit = { ...(item.fieldAudit ?? {}) };
+
+      for (const key of Object.keys(patch) as VitalFieldKey[]) {
+        const value = (patch[key] ?? "").trim();
+
+        if (value === "") {
+          delete audit[key];
+          continue;
+        }
+
+        if ((item[key] ?? "").trim() !== value) {
+          audit[key] = { at: timestamp, by: actor };
+        }
+      }
+
+      next.fieldAudit = audit;
+
+      return next;
+    }),
   }));
 }
 
@@ -439,6 +688,94 @@ export function resumeMedication(
             updatedAt: now(),
           }
         : item,
+    ),
+  }));
+}
+
+export function toggleHoldMedication(
+  patientId: string,
+  id: string,
+  actor: string,
+): void {
+  update(patientId, (records) => ({
+    ...records,
+    medications: records.medications.map((item) =>
+      item.id === id
+        ? markEdited({ ...item, held: !item.held }, actor)
+        : item,
+    ),
+  }));
+}
+
+type AdministrationInput = Omit<
+  MedicationAdministration,
+  "id" | keyof AuditFields | "medicationId" | "scheduledAt"
+>;
+
+export function setMedicationAdministration(
+  patientId: string,
+  medicationId: string,
+  scheduledAt: string,
+  input: AdministrationInput,
+  actor: string,
+): void {
+  const timestamp = now();
+
+  update(patientId, (records) => {
+    const existing = records.administrations.find(
+      (item) =>
+        item.medicationId === medicationId && item.scheduledAt === scheduledAt,
+    );
+
+    if (existing) {
+      return {
+        ...records,
+        administrations: records.administrations.map((item) =>
+          item.id === existing.id
+            ? markEdited({ ...item, ...input }, actor)
+            : item,
+        ),
+      };
+    }
+
+    const administration: MedicationAdministration = {
+      ...input,
+      id: crypto.randomUUID(),
+      medicationId,
+      scheduledAt,
+      createdAt: timestamp,
+      createdBy: actor,
+    };
+
+    return {
+      ...records,
+      administrations: [administration, ...records.administrations],
+    };
+  });
+}
+
+export function updateMedicationAdministration(
+  patientId: string,
+  id: string,
+  patch: Partial<AdministrationInput>,
+  actor: string,
+): void {
+  update(patientId, (records) => ({
+    ...records,
+    administrations: records.administrations.map((item) =>
+      item.id === id ? markEdited({ ...item, ...patch }, actor) : item,
+    ),
+  }));
+}
+
+export function removeMedicationAdministration(
+  patientId: string,
+  id: string,
+): void {
+  update(patientId, (records) => ({
+    ...records,
+    administrations: records.administrations.filter(
+      (item) => item.id !== id,
     ),
   }));
 }
