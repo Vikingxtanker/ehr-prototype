@@ -383,3 +383,122 @@ body {
     transform: rotate(360deg) scale(1);
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Doctor's Progress Notes - rich text editor & viewers               */
+/* ------------------------------------------------------------------ */
+
+.pn-editor,
+.pn-viewer {
+  color: #333333;
+}
+
+.pn-editor > *,
+.pn-viewer > * {
+  margin-top: 0.4em;
+  margin-bottom: 0.4em;
+}
+
+.pn-editor h1,
+.pn-editor h2,
+.pn-editor h3,
+.pn-editor h4,
+.pn-viewer h1,
+.pn-viewer h2,
+.pn-viewer h3,
+.pn-viewer h4 {
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.pn-editor h1,
+.pn-viewer h1 {
+  font-size: 1.35em;
+}
+
+.pn-editor h2,
+.pn-viewer h2 {
+  font-size: 1.15em;
+}
+
+.pn-editor h3,
+.pn-viewer h3 {
+  font-size: 1em;
+}
+
+.pn-editor ul,
+.pn-editor ol,
+.pn-viewer ul,
+.pn-viewer ol {
+  padding-left: 1.4em;
+  list-style-position: outside;
+}
+
+.pn-editor ul,
+.pn-viewer ul {
+  list-style: disc;
+}
+
+.pn-editor ol,
+.pn-viewer ol {
+  list-style: decimal;
+}
+
+.pn-editor blockquote,
+.pn-viewer blockquote {
+  border-left: 3px solid #d9534f;
+  padding-left: 0.75em;
+  margin-left: 0.25em;
+  color: #555555;
+}
+
+.pn-editor table,
+.pn-viewer table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.pn-editor td,
+.pn-editor th,
+.pn-viewer td,
+.pn-viewer th {
+  border: 1px solid #cccccc;
+  padding: 4px 8px;
+  vertical-align: top;
+}
+
+.pn-editor th,
+.pn-viewer th {
+  background: #f0f0f0;
+  font-weight: 600;
+}
+
+.pn-editor img,
+.pn-viewer img {
+  max-width: 100%;
+  height: auto;
+}
+
+.pn-editor .pn-search-hit,
+.pn-viewer .pn-search-hit {
+  background: #fef08a;
+  border-radius: 2px;
+}
+
+.pn-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: #aaaaaa;
+}
+
+.pn-editor .ProseMirror-selectednode {
+  outline: 2px solid #d9534f;
+  outline-offset: 1px;
+}
+
+.pn-editor .ProseMirror-gapcursor::after {
+  border-top: 1px solid #333333;
+}

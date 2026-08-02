@@ -137,6 +137,57 @@ export interface MedicationAdministration extends AuditFields {
   reason?: string;
 }
 
+export type IoCategory =
+  | "oral"
+  | "rtFeed"
+  | "iv"
+  | "bloodProduct"
+  | "irrigation"
+  | "urine"
+  | "drain"
+  | "aspiration"
+  | "bowel"
+  | "vomit"
+  | "other";
+
+export interface IoEntry extends AuditFields {
+  id: string;
+  category: IoCategory;
+  volume: string;
+  description: string;
+  route: string;
+  recordedBy: string;
+  recordedAt: string;
+  remarks?: string;
+}
+
+export type ProgressNoteStatus = "Draft" | "Finalized" | "Signed";
+
+export interface ProgressNoteVersion {
+  version: number;
+  author: string;
+  timestamp: string;
+  content: string;
+  changeSummary?: string;
+}
+
+export interface ProgressNote extends AuditFields {
+  id: string;
+  content: string;
+  plainText: string;
+  status: ProgressNoteStatus;
+  department: string;
+  employeeId: string;
+  noteDate: string;
+  versions: ProgressNoteVersion[];
+  signedBy?: string;
+  signedAt?: string;
+  signedEmployeeId?: string;
+  authorizedBy?: string;
+  signatureIp?: string;
+  signatureDevice?: string;
+}
+
 export interface ClinicalRecords {
   complaints: Complaint[];
   diagnoses: Diagnosis[];
@@ -144,6 +195,8 @@ export interface ClinicalRecords {
   vitals: VitalReading[];
   medications: Medication[];
   administrations: MedicationAdministration[];
+  ioEntries: IoEntry[];
+  progressNotes: ProgressNote[];
 }
 
 export const EMPTY_RECORDS: ClinicalRecords = {
@@ -153,6 +206,8 @@ export const EMPTY_RECORDS: ClinicalRecords = {
   vitals: [],
   medications: [],
   administrations: [],
+  ioEntries: [],
+  progressNotes: [],
 };
 
 const listeners = new Set<() => void>();
@@ -160,6 +215,7 @@ const cache = new Map<string, ClinicalRecords>();
 const writeQueues = new Map<string, Promise<void>>();
 const versions = new Map<string, number>();
 const loading = new Set<string>();
+const hydrated = new Set<string>();
 
 function backfillCreatedAt<T extends AuditFields>(
   items: unknown[] | undefined,
@@ -202,6 +258,26 @@ function migrateVitals(vitals: unknown[] | undefined): VitalReading[] {
   });
 }
 
+function backfillProgressNotes(items: unknown[] | undefined): ProgressNote[] {
+  return (items ?? []).map((item) => {
+    const record = (item ?? {}) as Partial<ProgressNote> & {
+      addedAt?: string;
+      recordedAt?: string;
+    };
+
+    return {
+      ...record,
+      createdAt:
+        record.createdAt ??
+        record.addedAt ??
+        record.recordedAt ??
+        new Date(0).toISOString(),
+      createdBy: record.createdBy ?? "Unknown",
+      versions: Array.isArray(record.versions) ? record.versions : [],
+    } as ProgressNote;
+  });
+}
+
 function normalize(records: unknown): ClinicalRecords {
   const parsed = (records ?? {}) as Partial<ClinicalRecords>;
 
@@ -214,6 +290,8 @@ function normalize(records: unknown): ClinicalRecords {
     administrations: backfillCreatedAt<MedicationAdministration>(
       parsed.administrations,
     ),
+    ioEntries: backfillCreatedAt<IoEntry>(parsed.ioEntries),
+    progressNotes: backfillProgressNotes(parsed.progressNotes),
   };
 }
 
@@ -244,17 +322,21 @@ export function hydrateClinicalRecords(patientId: string): void {
       ) => {
         const { data, error } = result;
 
-        if (
-          !error &&
-          data &&
-          (versions.get(patientId) ?? 0) === versionAtStart
-        ) {
-          cache.set(patientId, normalize(data.data));
+        if (error) {
+          console.error("Could not load clinical data:", error.message);
+
+          return;
+        }
+
+        if ((versions.get(patientId) ?? 0) === versionAtStart) {
+          cache.set(patientId, normalize(data?.data));
+
+          hydrated.add(patientId);
         }
       },
     )
-    .catch(() => {
-      // Keep whatever is currently cached.
+    .catch((error: unknown) => {
+      console.error("Could not load clinical data:", error);
     })
     .finally(() => {
       loading.delete(patientId);
@@ -278,6 +360,14 @@ function update(
   patientId: string,
   updater: (records: ClinicalRecords) => ClinicalRecords,
 ): void {
+  if (!hydrated.has(patientId)) {
+    console.warn(
+      `Skipped clinical-data write for ${patientId}: record has not finished loading.`,
+    );
+
+    return;
+  }
+
   const current = cache.get(patientId) ?? { ...EMPTY_RECORDS };
   const next = updater(current);
 
@@ -777,5 +867,220 @@ export function removeMedicationAdministration(
     administrations: records.administrations.filter(
       (item) => item.id !== id,
     ),
+  }));
+}
+
+export type IoEntryInput = Omit<IoEntry, "id" | keyof AuditFields>;
+
+export function addIoEntry(
+  patientId: string,
+  input: IoEntryInput,
+  actor: string,
+): void {
+  const entry: IoEntry = {
+    ...input,
+    id: crypto.randomUUID(),
+    createdAt: now(),
+    createdBy: actor,
+  };
+
+  update(patientId, (records) => ({
+    ...records,
+    ioEntries: [entry, ...records.ioEntries],
+  }));
+}
+
+export function addIoEntries(
+  patientId: string,
+  inputs: IoEntryInput[],
+  actor: string,
+): void {
+  const timestamp = now();
+
+  const entries: IoEntry[] = inputs.map((input) => ({
+    ...input,
+    id: crypto.randomUUID(),
+    createdAt: timestamp,
+    createdBy: actor,
+  }));
+
+  update(patientId, (records) => ({
+    ...records,
+    ioEntries: [...records.ioEntries, ...entries],
+  }));
+}
+
+export function updateIoEntry(
+  patientId: string,
+  id: string,
+  patch: Partial<IoEntryInput>,
+  actor: string,
+): void {
+  update(patientId, (records) => ({
+    ...records,
+    ioEntries: records.ioEntries.map((item) =>
+      item.id === id ? markEdited({ ...item, ...patch }, actor) : item,
+    ),
+  }));
+}
+
+export function removeIoEntry(patientId: string, id: string): void {
+  update(patientId, (records) => ({
+    ...records,
+    ioEntries: records.ioEntries.filter((item) => item.id !== id),
+  }));
+}
+
+export type ProgressNoteInput = Omit<
+  ProgressNote,
+  "id" | keyof AuditFields | "versions"
+>;
+
+export function addProgressNote(
+  patientId: string,
+  input: ProgressNoteInput,
+  actor: string,
+): string {
+  const timestamp = now();
+
+  const note: ProgressNote = {
+    ...input,
+    id: crypto.randomUUID(),
+    createdAt: timestamp,
+    createdBy: actor,
+    versions: [
+      {
+        version: 1,
+        author: actor,
+        timestamp,
+        content: input.content,
+        changeSummary: "Initial entry",
+      },
+    ],
+  };
+
+  update(patientId, (records) => ({
+    ...records,
+    progressNotes: [note, ...records.progressNotes],
+  }));
+
+  return note.id;
+}
+
+export function updateProgressNoteMeta(
+  patientId: string,
+  id: string,
+  patch: Pick<ProgressNote, "department" | "employeeId" | "noteDate">,
+  actor: string,
+): void {
+  update(patientId, (records) => ({
+    ...records,
+    progressNotes: records.progressNotes.map((note) =>
+      note.id === id ? markEdited({ ...note, ...patch }, actor) : note,
+    ),
+  }));
+}
+
+export function saveProgressNote(
+  patientId: string,
+  id: string,
+  content: string,
+  plainText: string,
+  actor: string,
+  changeSummary?: string,
+): void {
+  const timestamp = now();
+
+  update(patientId, (records) => ({
+    ...records,
+    progressNotes: records.progressNotes.map((note) => {
+      if (note.id !== id) return note;
+
+      const latestVersion = note.versions[note.versions.length - 1];
+
+      const nextVersion: ProgressNoteVersion = {
+        version: (latestVersion?.version ?? 0) + 1,
+        author: actor,
+        timestamp,
+        content,
+        changeSummary,
+      };
+
+      return {
+        ...note,
+        content,
+        plainText,
+        updatedBy: actor,
+        updatedAt: timestamp,
+        versions: [...note.versions, nextVersion],
+      };
+    }),
+  }));
+}
+
+export function finalizeProgressNote(
+  patientId: string,
+  id: string,
+  actor: string,
+): void {
+  const timestamp = now();
+
+  update(patientId, (records) => ({
+    ...records,
+    progressNotes: records.progressNotes.map((note) =>
+      note.id === id
+        ? {
+            ...note,
+            status: "Finalized",
+            updatedBy: actor,
+            updatedAt: timestamp,
+          }
+        : note,
+    ),
+  }));
+}
+
+export function signProgressNote(
+  patientId: string,
+  id: string,
+  actor: string,
+  meta: {
+    employeeId: string;
+    authorizedBy: string;
+    ip: string;
+    device: string;
+  },
+): void {
+  const timestamp = now();
+
+  update(patientId, (records) => ({
+    ...records,
+    progressNotes: records.progressNotes.map((note) => {
+      if (note.id !== id) return note;
+
+      const latestVersion = note.versions[note.versions.length - 1];
+
+      const signVersion: ProgressNoteVersion = {
+        version: (latestVersion?.version ?? 0) + 1,
+        author: actor,
+        timestamp,
+        content: note.content,
+        changeSummary: "Electronically signed",
+      };
+
+      return {
+        ...note,
+        status: "Signed",
+        signedBy: actor,
+        signedAt: timestamp,
+        signedEmployeeId: meta.employeeId,
+        authorizedBy: meta.authorizedBy,
+        signatureIp: meta.ip,
+        signatureDevice: meta.device,
+        updatedBy: actor,
+        updatedAt: timestamp,
+        versions: [...note.versions, signVersion],
+      };
+    }),
   }));
 }

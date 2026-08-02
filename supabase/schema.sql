@@ -20,10 +20,10 @@ create index if not exists patients_created_at_idx
   on public.patients (created_at desc);
 
 -- Clinical records: one row per patient holding the ClinicalRecords object
--- { complaints, diagnoses, orders, vitals, medications } as JSONB.
+-- { complaints, diagnoses, orders, vitals, medications, administrations, ioEntries, progressNotes } as JSONB.
 create table if not exists public.clinical_records (
   patient_id uuid primary key references public.patients (id) on delete cascade,
-  data jsonb not null default '{"complaints":[],"diagnoses":[],"orders":[],"vitals":[],"medications":[]}'::jsonb,
+  data jsonb not null default '{"complaints":[],"diagnoses":[],"orders":[],"vitals":[],"medications":[],"administrations":[],"ioEntries":[],"progressNotes":[]}'::jsonb,
   updated_at timestamptz not null default now()
 );
 

@@ -20,6 +20,8 @@ import {
 import { usePatient } from "@/hooks/use-patients";
 import { VitalsCharting } from "@/components/patients/vitals";
 import { MarChart } from "@/components/patients/mar";
+import { IoChart } from "@/components/patients/io-chart";
+import { DoctorsNotes } from "@/components/patients/doctors-notes";
 
 export default function PatientDetailPage({
   params,
@@ -91,6 +93,10 @@ export default function PatientDetailPage({
         <VitalsCharting patient={patient} />
       ) : activeTab === "mar" ? (
         <MarChart patient={patient} />
+      ) : activeTab === "io-chart" ? (
+        <IoChart patient={patient} />
+      ) : activeTab === "doctors-notes" ? (
+        <DoctorsNotes patient={patient} />
       ) : (
         <PatientModulePlaceholder tab={activeTabConfig} />
       )}
